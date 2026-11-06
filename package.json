@@ -1,0 +1,21 @@
+{
+  "name": "sample-ecommerce",
+  "version": "1.1.0",
+  "description": "SAMPLE - E-commerce de música (rock). Projeto de Express, EJS e SQLite",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "express-session": "^1.18.1",
+    "multer": "^2.4.0",
+    "nodemon": "^3.1.14",
+    "sqlite3": "^6.0.1"
+  },
+  "allowScripts": {
+    "sqlite3@6.0.1": true
+  }
+}
