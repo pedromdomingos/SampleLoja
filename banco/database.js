@@ -1,6 +1,14 @@
 const fs = require('fs');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+// Tenta usar o pacote "sqlite3". Se ele não carregar (acontece em alguns servidores online),
+// usa o plano B em banco/sqlite-compat.js, que usa o SQLite embutido no Node.
+let sqlite3;
+try {
+    sqlite3 = require('sqlite3').verbose();
+} catch (erroSqlite) {
+    console.log('Pacote sqlite3 indisponível (' + erroSqlite.code + '). Usando o SQLite embutido no Node.');
+    sqlite3 = require('./sqlite-compat');
+}
 const bcrypt = require('bcryptjs');
 const { colunasDeEspecificacao } = require('../util/tipos');
 const { categoriasIniciais, produtosDeTeste, produtosCatalogoV2 } = require('../util/produtos-teste');
