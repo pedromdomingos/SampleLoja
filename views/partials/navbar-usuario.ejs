@@ -1,0 +1,14 @@
+<nav class="sample-nav">
+    <div class="sample-nav-inner">
+        <a class="sample-logo" href="/">SAMPLE<span>.</span></a>
+        <div class="sample-nav-links">
+            <a href="/">LOJA</a>
+            <a href="/pedidos">MEUS PEDIDOS</a>
+            <a href="/carrinho">CARRINHO<% if (carrinhoQtd > 0) { %> (<%= carrinhoQtd %>)<% } %></a>
+            <a href="/conta">MINHA CONTA</a>
+            <a href="/conta/configuracoes">CONFIGURAÇÕES</a>
+        </div>
+        <div class="sample-nav-user"><span><%= usuario.nome %></span><form action="/logout" method="POST"><button type="submit">SAIR</button></form></div>
+    </div>
+</nav>
+<%- include('mensagem') %>

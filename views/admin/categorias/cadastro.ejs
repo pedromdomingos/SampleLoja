@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading">
+        <span class="eyebrow">CATÁLOGO</span>
+        <h1>NOVA CATEGORIA</h1>
+        <p>Defina também o tipo para que o cadastro de produtos mostre os campos certos.</p>
+    </section>
+
+    <section class="sample-panel sample-panel-narrow">
+        <form action="/admin/categorias/cadastrar" method="POST" class="sample-form">
+            <div class="field"><label>Nome da categoria *</label><input type="text" name="nome" required placeholder="Ex.: Guitarras"></div>
+            <div class="field"><label>Tipo da categoria *</label>
+                <select name="tipo" required>
+                    <option value="">Selecione</option>
+                    <% selecionaveis.forEach(t => { %><option value="<%= t %>"><%= tipos[t].rotulo %></option><% }) %>
+                </select>
+            </div>
+            <div class="field"><label>Descrição</label><textarea name="descricao" rows="4" placeholder="Descreva a categoria..."></textarea></div>
+            <div class="button-row"><button class="sample-button sample-button-red" type="submit">CADASTRAR</button><a href="/admin/categorias" class="sample-button sample-button-ghost">CANCELAR</a></div>
+        </form>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

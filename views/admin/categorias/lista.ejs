@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading heading-with-action">
+        <div><span class="eyebrow">CATÁLOGO</span><h1>CATEGORIAS</h1><p>Organize a loja por tipo de produto.</p></div>
+        <a href="/admin/categorias/form-cadastrar" class="sample-button sample-button-red">+ NOVA CATEGORIA</a>
+    </section>
+
+    <section class="sample-panel">
+        <div class="table-wrap"><table class="sample-table">
+            <thead><tr><th>ID</th><th>Categoria</th><th>Tipo</th><th>Descrição</th><th>Ações</th></tr></thead>
+            <tbody>
+            <% categorias.forEach(categoria => { %>
+                <tr>
+                    <td>#<%= categoria.id %></td>
+                    <td><strong><%= categoria.nome %></strong></td>
+                    <td><span class="sample-badge"><%= (tipos[categoria.tipo] || tipos.outros).rotulo %></span></td>
+                    <td><%= categoria.descricao || '—' %></td>
+                    <td>
+                        <form action="/admin/categorias/<%= categoria.id %>/excluir" method="POST" onsubmit="return confirm('Excluir esta categoria?');"><button class="table-action danger" type="submit">Excluir</button></form>
+                    </td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table></div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

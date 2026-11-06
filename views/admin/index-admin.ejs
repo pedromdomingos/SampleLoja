@@ -1,0 +1,58 @@
+<%- include('partials/header') %>
+<%- include('partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading">
+        <span class="eyebrow">ÁREA INTERNA</span>
+        <h1>PAINEL DO <%= usuario.perfil === 'admin' ? 'ADMINISTRADOR' : 'FUNCIONÁRIO' %></h1>
+        <p>Olá, <%= usuario.nome %>! Gerencie os produtos e categorias da loja.</p>
+    </section>
+
+    <section class="dash-grid">
+        <a href="/admin/produtos" class="dash-card">
+            <i class="bi bi-box-seam"></i>
+            <h2>PRODUTOS</h2>
+            <p>Cadastre e consulte os produtos disponíveis na loja.</p>
+            <span class="dash-link">VER PRODUTOS →</span>
+        </a>
+
+        <a href="/admin/categorias" class="dash-card">
+            <i class="bi bi-tags"></i>
+            <h2>CATEGORIAS</h2>
+            <p>Cadastre e consulte as categorias de produtos.</p>
+            <span class="dash-link">VER CATEGORIAS →</span>
+        </a>
+
+        <a href="/admin/pedidos" class="dash-card">
+            <i class="bi bi-receipt"></i>
+            <h2>PEDIDOS</h2>
+            <p>Acompanhe os pedidos e atualize o status e a entrega.</p>
+            <span class="dash-link">VER PEDIDOS →</span>
+        </a>
+
+        <a href="/admin/frete" class="dash-card">
+            <i class="bi bi-truck"></i>
+            <h2>FRETE</h2>
+            <p>Ajuste os valores de frete por região e por peso.</p>
+            <span class="dash-link">VER TABELA →</span>
+        </a>
+
+        <% if (usuario.perfil === 'admin') { %>
+        <a href="/admin/usuarios" class="dash-card">
+            <i class="bi bi-people"></i>
+            <h2>USUÁRIOS</h2>
+            <p>Cadastre funcionários e controle o acesso às contas.</p>
+            <span class="dash-link">VER USUÁRIOS →</span>
+        </a>
+        <% } %>
+
+        <a href="/" class="dash-card dash-card-accent">
+            <i class="bi bi-shop"></i>
+            <h2>VER A LOJA</h2>
+            <p>Veja o site como o cliente vê: vitrine, categorias e promoções.</p>
+            <span class="dash-link">ABRIR A LOJA →</span>
+        </a>
+    </section>
+</main>
+
+<%- include('partials/footer') %>

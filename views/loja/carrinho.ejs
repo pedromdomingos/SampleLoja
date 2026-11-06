@@ -1,0 +1,73 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+<%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Carrinho' }], titulo: 'CARRINHO', texto: '', pills: [], etapa: 1, etapaFeita: false }) %>
+
+<main class="loja-pagina">
+    <% if (!itens.length) { %>
+        <div class="empty-state loja-vazio">
+            <i class="bi bi-cart3 loja-vazio-icone"></i>
+            <p>Seu carrinho está vazio.</p>
+            <div class="vazio-acoes">
+                <a href="/loja/roupas" class="sample-button sample-button-red">VER ROUPAS</a>
+                <a href="/loja/instrumentos" class="sample-button sample-button-ghost">VER INSTRUMENTOS</a>
+                <a href="/loja/discos" class="sample-button sample-button-ghost">VER DISCOS</a>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="carrinho-grid">
+            <section class="carrinho-itens">
+                <% itens.forEach(i => { %>
+                    <article class="carrinho-item">
+                        <a href="/produto/<%= i.produto.id %>" class="carrinho-foto"><% if (i.produto.imagem) { %><img src="/uploads/<%= i.produto.imagem %>" alt="<%= i.produto.nome %>"><% } %></a>
+                        <div class="carrinho-info">
+                            <a href="/produto/<%= i.produto.id %>" class="carrinho-nome"><%= i.produto.nome %></a>
+                            <span class="muted"><%= i.produto.categoria %><%= i.produto.tamanho ? ' · Tam. ' + i.produto.tamanho : '' %></span>
+                            <span class="carrinho-preco"><% if (i.produto.valor_promocional) { %><s><%= brl(i.produto.valor) %></s> <% } %><%= brl(i.preco) %> cada</span>
+                            <div class="carrinho-acoes">
+                                <form action="/carrinho/atualizar" method="POST" class="qtd-step" data-qtd data-auto>
+                                    <input type="hidden" name="produto_id" value="<%= i.produto.id %>">
+                                    <button type="button" data-menos aria-label="Diminuir">−</button>
+                                    <input type="number" name="quantidade" value="<%= i.quantidade %>" min="1" max="<%= i.produto.estoque %>" aria-label="Quantidade">
+                                    <button type="button" data-mais aria-label="Aumentar">+</button>
+                                </form>
+                                <form action="/carrinho/remover" method="POST">
+                                    <input type="hidden" name="produto_id" value="<%= i.produto.id %>">
+                                    <button type="submit" class="link-remover">Remover</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="carrinho-subtotal"><%= brl(i.preco * i.quantidade) %></div>
+                    </article>
+                <% }) %>
+                <a href="/" class="sample-button sample-button-outline-claro">← Continuar comprando</a>
+            </section>
+
+            <aside class="sample-panel carrinho-resumo">
+                <div class="panel-heading"><h2>RESUMO</h2></div>
+                <%
+                    // barra de frete grátis: quanto falta para chegar em freteGratis (R$ 300)
+                    const falta = Math.max(0, freteGratis - subtotal);
+                    const pct = Math.min(100, Math.round(subtotal / freteGratis * 100));
+                %>
+                <dl class="resumo-linhas">
+                    <dt>Subtotal</dt><dd><%= brl(subtotal) %></dd>
+                    <dt>Frete</dt><dd class="<%= falta > 0 ? 'muted' : 'frete-gratis' %>"><%= falta > 0 ? 'calculado no endereço' : 'Grátis' %></dd>
+                </dl>
+                <div class="frete-barra">
+                    <div class="frete-trilho"><span style="width: <%= pct %>%"></span></div>
+                    <p class="<%= falta > 0 ? '' : 'ganhou' %>"><%= falta > 0 ? 'Faltam ' + brl(falta) + ' pra frete grátis' : '🎉 Você ganhou frete grátis!' %></p>
+                </div>
+                <div class="resumo-total"><span>Total</span><strong><%= brl(subtotal) %></strong></div>
+                <p class="muted resumo-peso">Peso total: <%= (pesoTotal / 1000).toFixed(2).replace('.', ',') %> kg<%= falta > 0 ? ' · o frete entra no checkout' : '' %></p>
+                <% if (!usuario || usuario.perfil === 'cliente') { %>
+                    <a href="/checkout/endereco" class="sample-button sample-button-red resumo-botao">IR PARA O CHECKOUT</a>
+                <% } else { %>
+                    <p class="muted">Administrador e funcionário não fazem compras.</p>
+                <% } %>
+            </aside>
+        </div>
+    <% } %>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

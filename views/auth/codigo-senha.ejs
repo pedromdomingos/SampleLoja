@@ -1,0 +1,30 @@
+<%- include('../admin/partials/header') %>
+
+<main class="auth-page auth-login-page">
+    <section class="auth-card">
+        <div class="auth-brand">SAMPLE</div>
+        <span class="eyebrow">NOVA SENHA</span>
+        <p class="auth-subtitle">Digite o código que enviamos para <strong><%= email %></strong> e escolha uma nova senha.</p>
+
+        <%# E-mail simulado: enquanto o envio real não existe, o código aparece aqui %>
+        <div class="email-simulado">
+            <span class="eyebrow">E-MAIL SIMULADO — MODO DEMONSTRAÇÃO</span>
+            <p><strong>Para:</strong> <%= email %><br><strong>Assunto:</strong> Seu código de recuperação da SAMPLE</p>
+            <p>Seu código é <strong class="codigo-demo"><%= codigoDemo %></strong>. Ele vale por 15 minutos.</p>
+        </div>
+
+        <% if (erro) { %><div class="sample-alert sample-alert-danger"><%= erro %></div><% } %>
+
+        <form action="/recuperar-senha/codigo" method="POST" class="sample-form">
+            <div class="field"><label>Código de 6 dígitos</label><input type="text" name="codigo" inputmode="numeric" maxlength="6" required autofocus></div>
+            <div class="field"><label>Nova senha (mínimo 8 caracteres)</label><input type="password" name="senha" minlength="8" required></div>
+            <div class="field"><label>Confirmar nova senha</label><input type="password" name="confirmar_senha" minlength="8" required></div>
+            <button class="sample-button sample-button-red" type="submit">SALVAR NOVA SENHA</button>
+        </form>
+
+        <div class="auth-links"><a href="/recuperar-senha">Solicitar um novo código</a></div>
+        <div class="auth-links"><a href="/login">Voltar para o login</a></div>
+    </section>
+</main>
+
+<%- include('../admin/partials/footer') %>

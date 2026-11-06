@@ -1,0 +1,25 @@
+<%- include('../admin/partials/header') %>
+
+<main class="auth-page auth-login-page">
+    <section class="auth-card">
+        <div class="auth-brand">SAMPLE</div>
+        <span class="eyebrow">BEM-VINDO À SAMPLE</span>
+        <p class="auth-subtitle">Entre para acessar sua conta e continuar sua experiência.</p>
+
+        <% if (mensagem) { %>
+            <div class="sample-alert sample-alert-<%= mensagem.tipo %>"><%= mensagem.texto %></div>
+        <% } %>
+
+        <form action="/login" method="POST" class="sample-form">
+            <div class="field"><label>E-mail</label><input type="email" name="email" required autofocus></div>
+            <div class="field"><label>Senha</label><input type="password" name="senha" required></div>
+            <button class="sample-button sample-button-red" type="submit">ENTRAR</button>
+        </form>
+
+        <div class="auth-links"><a href="/recuperar-senha">Esqueci minha senha</a></div>
+        <div class="auth-links">Ainda não tem conta? <a href="/cadastro">Criar conta</a></div>
+        <div class="auth-links"><a href="/">Voltar para a loja</a></div>
+    </section>
+</main>
+
+<%- include('../admin/partials/footer') %>

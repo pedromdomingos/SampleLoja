@@ -1,0 +1,141 @@
+<%- include('admin/partials/header') %>
+<% const podeComprar = !usuario || usuario.perfil === 'cliente'; %>
+
+<%- include('partials/loja-nav') %>
+<%- include('partials/mensagem') %>
+
+<section class="hero-rock">
+    <div class="hero-grid">
+        <div class="hero-copy">
+            <span class="eyebrow">ROUPAS, INSTRUMENTOS E DISCOS PARA QUEM VIVE O ROCK</span>
+            <h1>O ROCK NÃO<br>PEDE <span>LICENÇA</span></h1>
+            <p>Da primeira camiseta rasgada ao primeiro riff desafinado, a SAMPLE existe pra equipar quem faz barulho, dentro e fora do palco.</p>
+            <div class="hero-botoes">
+                <a href="/loja/roupas" class="hero-btn hero-btn-red">Ver produtos</a>
+                <a href="#novidades" class="hero-btn hero-btn-ghost">Ver novidades</a>
+            </div>
+        </div>
+
+        <div class="vz" id="vinilZona">
+            <div class="vinyl-3d" id="vinilTilt">
+                <div class="vinyl" id="vinil" tabindex="0" role="img" aria-label="Disco de vinil. Arraste ou clique para girar.">
+                    <span class="vinyl-label"><b>SAMPLE</b><small>ROCK · 33 RPM</small></span>
+                </div>
+                <div class="vinyl-sheen" aria-hidden="true"></div>
+            </div>
+            <% if (vinil) { %>
+                <a class="vz-card vz-card-a" href="/produto/<%= vinil.id %>">
+                    <strong><%= vinil.nome.length > 26 ? vinil.nome.slice(0, 24) + '…' : vinil.nome %></strong>
+                    <span><%= brl(precoFinal(vinil)) %></span>
+                </a>
+            <% } %>
+            <% if (oferta) { %>
+                <a class="vz-card vz-card-b" href="/produto/<%= oferta.id %>">
+                    <strong><%= oferta.nome.length > 26 ? oferta.nome.slice(0, 24) + '…' : oferta.nome %></strong>
+                    <span><%= desconto(oferta) %>% OFF hoje</span>
+                </a>
+            <% } %>
+            <button type="button" class="vz-som" id="vinilSom" aria-live="polite"><i class="bi bi-volume-mute-fill"></i> <span>Clique no disco para tocar rock</span></button>
+        </div>
+    </div>
+</section>
+
+<main class="store-home">
+
+    <section class="store-categories" id="categorias">
+        <h2 class="store-title">O QUE VOCÊ VAI ENCONTRAR</h2>
+        <div class="bento">
+            <a class="bento-card bento-roupas reveal" style="--i:0" href="/loja/roupas">
+                <svg class="bento-icone" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M22 8 8 16l5 12 7-3v31h24V25l7 3 5-12-14-8c-1 5-5 8-10 8s-9-3-10-8z"/></svg>
+                <div><h3>ROUPAS</h3><p>Camisetas de banda, jaquetas com patch e moletons para levar o palco pra rua.</p><span class="bento-link">Explorar <i>→</i></span></div>
+            </a>
+            <a class="bento-card bento-instrumentos reveal" style="--i:1" href="/loja/instrumentos">
+                <svg class="bento-icone" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="m44 6 14 14-5 3-4-4-17 17c3 4 2 9-2 13-5 5-13 5-18 0s-5-13 0-18c4-4 9-5 13-2l17-17-4-4z"/><circle cx="20" cy="44" r="3"/></svg>
+                <div><h3>INSTRUMENTOS</h3><p>Guitarras, baixos, pedais e baquetas.</p><span class="bento-link">Explorar <i>→</i></span></div>
+            </a>
+            <a class="bento-card bento-discos reveal" style="--i:2" href="/loja/discos">
+                <svg class="bento-icone" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="32" cy="32" r="26"/><circle cx="32" cy="32" r="18"/><circle cx="32" cy="32" r="6"/></svg>
+                <div><h3>DISCOS</h3><p>Vinis, CDs e box sets de colecionador.</p><span class="bento-link">Explorar <i>→</i></span></div>
+            </a>
+        </div>
+    </section>
+
+    <section class="store-section store-section-claro tn" id="mais-vendidos">
+        <div class="sec-topo reveal">
+            <h2 class="store-title">MAIS VENDIDOS</h2>
+        </div>
+        <% if (!maisVendidos.length) { %>
+            <p class="loja-vazio-claro">Em breve, os produtos em destaque da loja.</p>
+        <% } else { %>
+        <div class="carousel-wrap reveal">
+            <button type="button" class="seta seta-esq" aria-label="Anterior" hidden><i class="bi bi-chevron-left"></i></button>
+            <button type="button" class="seta seta-dir" aria-label="Próximo" hidden><i class="bi bi-chevron-right"></i></button>
+            <div class="carousel-viewport"><div class="carousel-track">
+                <% maisVendidos.forEach(p => { %>
+                    <%- include('partials/loja-card', { p: p, podeComprar: podeComprar, voltarPara: '/#mais-vendidos', selo: 'Mais vendido' }) %>
+                <% }) %>
+            </div></div>
+        </div>
+        <% } %>
+    </section>
+
+    <section class="store-section store-section-bege" id="promocoes">
+        <div class="sec-topo reveal">
+            <h2 class="store-title store-title-vinho">PROMOÇÕES</h2>
+        </div>
+        <% if (!promocoes.length) { %>
+            <p class="loja-vazio-claro">Nenhuma promoção no momento.</p>
+        <% } else { %>
+        <div class="carousel-wrap reveal">
+            <button type="button" class="seta seta-esq" aria-label="Anterior" hidden><i class="bi bi-chevron-left"></i></button>
+            <button type="button" class="seta seta-dir" aria-label="Próximo" hidden><i class="bi bi-chevron-right"></i></button>
+            <div class="carousel-viewport"><div class="carousel-track">
+                <% promocoes.forEach(p => { %>
+                    <%- include('partials/loja-card', { p: p, podeComprar: podeComprar, voltarPara: '/#promocoes', selo: '' }) %>
+                <% }) %>
+            </div></div>
+        </div>
+        <% } %>
+    </section>
+
+    <section class="store-section store-section-escuro tn" id="novidades">
+        <div class="sec-topo reveal">
+            <h2 class="store-title store-title-mostarda">NOVIDADES</h2>
+        </div>
+        <% if (!novidades.length) { %>
+            <p class="loja-vazio-claro">Em breve, novidades por aqui.</p>
+        <% } else { %>
+        <div class="carousel-wrap reveal">
+            <button type="button" class="seta seta-esq" aria-label="Anterior" hidden><i class="bi bi-chevron-left"></i></button>
+            <button type="button" class="seta seta-dir" aria-label="Próximo" hidden><i class="bi bi-chevron-right"></i></button>
+            <div class="carousel-viewport"><div class="carousel-track">
+                <% novidades.forEach(p => { %>
+                    <%- include('partials/loja-card', { p: p, podeComprar: podeComprar, voltarPara: '/#novidades', selo: 'Novidade' }) %>
+                <% }) %>
+            </div></div>
+        </div>
+        <% } %>
+    </section>
+
+    <section class="manifesto" id="sobre">
+        <p class="manifesto-texto reveal">ROCK NÃO É SÓ UM SOM. É JEANS RASGADO, DISCO ARRANHADO E VOLUME NO TALO. <span>A SAMPLE VENDE O QUE SOBRA DEPOIS DO SHOW.</span></p>
+        <p class="manifesto-assinatura">— MANIFESTO SAMPLE, DESDE A GARAGEM</p>
+    </section>
+
+    <div class="onda" style="--onda-cor:#1c1814"></div>
+    <section class="newsletter">
+        <div>
+            <h2 class="store-title">FIQUE NO VOLUME ALTO</h2>
+            <p>Lançamentos, drops de vinil limitado e novidades antes de todo mundo — direto no seu e-mail.</p>
+        </div>
+        <form class="newsletter-form" id="newsletterForm">
+            <input type="email" placeholder="seuemail@exemplo.com" aria-label="Seu e-mail" required>
+            <button type="submit">Inscrever-se</button>
+        </form>
+    </section>
+
+</main>
+
+<%- include('partials/loja-rodape') %>
+
+<%- include('admin/partials/footer') %>

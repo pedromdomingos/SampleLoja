@@ -1,0 +1,19 @@
+<%# Linha do tempo do pedido. Recebe: pedido, historico e ETAPAS %>
+<%
+    const posicao = ETAPAS.indexOf(pedido.status);
+    const cancelado = pedido.status === 'Cancelado';
+    const quando = (etapa) => { const h = historico.find(x => x.status === etapa); return h ? h.criado_em : ''; };
+%>
+<% if (cancelado) { %>
+    <div class="sample-alert sample-alert-danger">Pedido cancelado em <%= quando('Cancelado') %>.</div>
+<% } else { %>
+    <ol class="timeline">
+        <% ETAPAS.forEach((etapa, i) => { %>
+            <li class="<%= i <= posicao ? 'feito' : '' %> <%= i === posicao ? 'atual' : '' %>">
+                <span class="ponto"></span>
+                <strong><%= etapa %></strong>
+                <small><%= quando(etapa) %></small>
+            </li>
+        <% }) %>
+    </ol>
+<% } %>

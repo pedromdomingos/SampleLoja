@@ -1,0 +1,51 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+<%
+    const podeComprar = !usuario || usuario.perfil === 'cliente';
+    const qtdFiltros = selecionados.paginas.length + selecionados.faixas.length + selecionados.promocao.length;
+    const faixasBusca = [['0-100', 'Até R$ 100'], ['100-300', 'R$ 100 – R$ 300'], ['300-1000', 'R$ 300 – R$ 1.000'], ['1000-', 'Acima de R$ 1.000']];
+    const secoes = [
+        { campo: 'pagina', rotulo: 'Categoria', opcoes: Object.keys(PAGINAS).map(k => ({ valor: k, rotulo: PAGINAS[k].rotulo, n: 0 })) },
+        { campo: 'preco', rotulo: 'Preço', opcoes: faixasBusca.map(f => ({ valor: f[0], rotulo: f[1], n: 0 })) }
+    ];
+    const marcados = { pagina: selecionados.paginas, preco: selecionados.faixas, promocao: selecionados.promocao };
+    const total = produtos.length;
+%>
+<%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Busca' }], titulo: 'RESULTADOS', texto: 'Você buscou por “' + termo + '”.', pills: [], etapa: 0, etapaFeita: false }) %>
+
+<main class="loja-pagina">
+    <form method="GET" action="/busca" id="formFiltros" data-lista>
+        <input type="hidden" name="q" value="<%= termo %>">
+        <div class="loja-toolbar">
+            <p class="resultado-info" id="resultadoInfo" aria-live="polite"><%= total %> resultado<%= total === 1 ? '' : 's' %> para “<%= termo %>”</p>
+            <%- include('../partials/loja-controles', { ORDENS: ORDENS, ordem: ordem, qtdFiltros: qtdFiltros, secoes: secoes, selecionados: marcados, mostrarPromocao: true }) %>
+        </div>
+        <div class="chips-ativos" id="chipsAtivos"></div>
+
+        <div class="loja-corpo">
+            <div class="loja-resultados" id="resultados">
+                <% if (produtos.length === 0) { %>
+                    <div class="empty-state loja-vazio">
+                        <i class="bi bi-search loja-vazio-icone"></i>
+                        <p>Nenhum produto encontrado<%= qtdFiltros ? ' com esses filtros' : '' %>. Confira a escrita ou tente outra palavra.</p>
+                        <div class="vazio-acoes">
+                            <a class="sample-button sample-button-red" href="/busca?q=camiseta">Camisetas</a>
+                            <a class="sample-button sample-button-ghost" href="/busca?q=guitarra">Guitarras</a>
+                            <a class="sample-button sample-button-ghost" href="/busca?q=vinil">Vinis</a>
+                            <a class="sample-button sample-button-ghost" href="/#categorias">Ver categorias</a>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="produto-grid">
+                        <% produtos.forEach(p => { %>
+                            <%- include('../partials/loja-card', { p: p, podeComprar: podeComprar, voltarPara: caminhoAtual, selo: '' }) %>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </form>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

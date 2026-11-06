@@ -1,0 +1,16 @@
+<nav class="sample-nav">
+    <div class="sample-nav-inner">
+        <a class="sample-logo" href="/admin/index">SAMPLE<span>.</span></a>
+        <div class="sample-nav-links">
+            <a href="/admin/index">INÍCIO</a>
+            <a href="/admin/produtos">PRODUTOS</a>
+            <a href="/admin/categorias">CATEGORIAS</a>
+            <a href="/admin/pedidos">PEDIDOS</a>
+            <a href="/admin/frete">FRETE</a>
+            <% if (usuario.perfil === 'admin') { %><a href="/admin/usuarios">USUÁRIOS</a><% } %>
+            <a href="/" class="nav-loja"><i class="bi bi-shop"></i> VER LOJA</a>
+        </div>
+        <div class="sample-nav-user"><span><%= usuario.nome %></span><form action="/logout" method="POST"><button type="submit">SAIR</button></form></div>
+    </div>
+</nav>
+<%- include('../../partials/mensagem') %>

@@ -1,0 +1,31 @@
+<%# Card de produto. Recebe: p (produto), podeComprar, voltarPara e selo (texto do selo; vazio usa "Mais vendido" se o produto for destaque) %>
+<%
+    const _selo = selo || (p.destaque ? 'Mais vendido' : '');
+    const _tipo = (p.tipo_peca || p.tipo_instrumento || p.formato || p.categoria || '');
+%>
+<article class="product-card">
+    <a class="product-photo" href="/produto/<%= p.id %>" tabindex="-1" aria-hidden="true">
+        <% if (p.imagem) { %><img src="/uploads/<%= p.imagem %>" alt=""><% } %>
+        <% if (_selo) { %><em class="selo"><%= _selo %></em><% } %>
+        <% if (desconto(p) > 0) { %><em class="off-badge">-<%= desconto(p) %>%</em><% } %>
+        <% if (p.estoque <= 0) { %><em class="sem-estoque">INDISPONÍVEL</em><% } %>
+        <span class="product-quick">Ver detalhes <i class="bi bi-arrow-right"></i></span>
+    </a>
+    <div class="product-body">
+        <span class="product-tipo"><%= _tipo %></span>
+        <h3><a href="/produto/<%= p.id %>"><%= p.nome %></a></h3>
+        <% if (p.avaliacao > 0) { %>
+            <div class="stars" aria-label="Nota <%= Math.round(p.avaliacao) %> de 5"><% for (let i = 1; i <= 5; i++) { %><i class="bi bi-star-fill <%= i <= Math.round(p.avaliacao) ? '' : 'off' %>"></i><% } %></div>
+        <% } %>
+        <div class="product-price"><% if (p.valor_promocional) { %><s><%= brl(p.valor) %></s> <% } %><%= brl(precoFinal(p)) %></div>
+        <% if (podeComprar && p.estoque > 0) { %>
+            <form action="/carrinho/adicionar" method="POST">
+                <input type="hidden" name="produto_id" value="<%= p.id %>">
+                <input type="hidden" name="voltar" value="<%= voltarPara %>">
+                <button class="product-buy" type="submit">Adicionar ao carrinho</button>
+            </form>
+        <% } else if (p.estoque > 0) { %>
+            <a class="product-buy" href="/produto/<%= p.id %>">Ver produto</a>
+        <% } %>
+    </div>
+</article>

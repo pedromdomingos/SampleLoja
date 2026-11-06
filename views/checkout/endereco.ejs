@@ -1,0 +1,66 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+<%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Carrinho', u: '/carrinho' }, { t: 'Entrega' }], titulo: 'ENDEREÇO DE ENTREGA', texto: 'Para finalizar a compra é obrigatório informar onde vamos entregar.', pills: [], etapa: 2, etapaFeita: false }) %>
+
+<main class="loja-pagina">
+    <section class="sample-panel sample-panel-narrow">
+        <% if (erro) { %><div class="sample-alert sample-alert-danger"><%= erro %></div><% } %>
+
+        <form action="/checkout/endereco" method="POST" class="sample-form">
+
+        <% if (enderecos.length === 0) { %>
+            <%# Cliente sem endereço: precisa cadastrar um agora %>
+            <p class="muted">Você ainda não tem endereço cadastrado. Preencha abaixo para continuar.</p>
+            <input type="hidden" name="endereco_id" value="novo">
+            <%- include('../partials/form-endereco') %>
+
+        <% } else { %>
+            <%# Cliente com endereço: escolhe um dos cadastrados ou cadastra um novo %>
+            <% enderecos.forEach(e => { %>
+                <label class="radio-card">
+                    <input type="radio" name="endereco_id" value="<%= e.id %>" <%= (!abrirNovo && Number(selecionado) === e.id) ? 'checked' : '' %>>
+                    <span>
+                        <strong><%= e.destinatario %></strong><br>
+                        <%= e.rua %>, <%= e.numero %><%= e.complemento ? ' — ' + e.complemento : '' %><br>
+                        <span class="muted"><%= e.bairro %> — <%= e.cidade %>/<%= e.estado %> — CEP <%= e.cep %></span>
+                    </span>
+                </label>
+            <% }) %>
+
+            <label class="radio-card">
+                <input type="radio" name="endereco_id" value="novo" <%= abrirNovo ? 'checked' : '' %>>
+                <span><strong>Usar outro endereço</strong><br><span class="muted">Cadastrar um novo endereço de entrega</span></span>
+            </label>
+
+            <div id="novoEndereco" class="sample-form" hidden>
+                <%- include('../partials/form-endereco') %>
+            </div>
+
+            <script>
+            (function () {
+                var radios = document.querySelectorAll('input[name="endereco_id"]');
+                var bloco = document.getElementById('novoEndereco');
+
+                // mostra os campos só quando "Usar outro endereço" está marcado
+                function atualizar() {
+                    var marcado = document.querySelector('input[name="endereco_id"]:checked');
+                    var novo = marcado && marcado.value === 'novo';
+                    bloco.hidden = !novo;
+                    bloco.querySelectorAll('input').forEach(function (campo) { campo.disabled = !novo; });
+                }
+                radios.forEach(function (r) { r.addEventListener('change', atualizar); });
+                atualizar();
+            })();
+            </script>
+        <% } %>
+
+            <div class="button-row">
+                <button class="sample-button sample-button-red" type="submit">CONTINUAR</button>
+                <a href="/" class="sample-button sample-button-ghost">VOLTAR À LOJA</a>
+            </div>
+        </form>
+    </section>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

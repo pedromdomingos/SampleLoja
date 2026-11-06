@@ -1,0 +1,45 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/navbar-usuario') %>
+
+<main class="admin-main">
+    <section class="admin-heading"><span class="eyebrow">MINHA ÁREA</span><h1>CONFIGURAÇÕES</h1><p>Cadastre os endereços de entrega que você vai usar nas compras.</p></section>
+
+    <div class="account-grid">
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>MEUS ENDEREÇOS</h2><span><%= enderecos.length %> cadastrado(s)</span></div>
+            <% if (enderecos.length === 0) { %>
+                <div class="empty-state">Você ainda não possui endereço de entrega. Cadastre um ao lado — ele é obrigatório para finalizar uma compra.</div>
+            <% } %>
+            <% enderecos.forEach(e => { %>
+                <div class="address-card">
+                    <strong><%= e.destinatario %></strong><br>
+                    <%= e.rua %>, <%= e.numero %><%= e.complemento ? ' — ' + e.complemento : '' %><br>
+                    <%= e.bairro %> — <%= e.cidade %>/<%= e.estado %> — CEP <%= e.cep %><br>
+                    <span>Tel. <%= e.telefone %></span>
+                    <form action="/conta/enderecos/<%= e.id %>/excluir" method="POST" onsubmit="return confirm('Remover este endereço?');">
+                        <button class="table-action danger" type="submit">Remover</button>
+                    </form>
+                </div>
+            <% }) %>
+        </section>
+
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>NOVO ENDEREÇO</h2></div>
+            <form action="/conta/enderecos" method="POST" class="sample-form">
+                <%- include('../partials/form-endereco') %>
+                <button class="sample-button sample-button-red" type="submit">SALVAR ENDEREÇO</button>
+            </form>
+        </section>
+    </div>
+
+    <section class="sample-panel sample-panel-danger">
+        <div class="panel-heading"><h2>EXCLUIR MINHA CONTA</h2></div>
+        <p class="muted">Ao excluir, seus dados e endereços são apagados e não podem ser recuperados. Para confirmar, digite sua senha.</p>
+        <form action="/conta/excluir" method="POST" class="sample-form" onsubmit="return confirm('Tem certeza? Esta ação não pode ser desfeita.');">
+            <div class="field"><label>Senha *</label><input type="password" name="senha" required></div>
+            <button class="sample-button sample-button-ghost button-perigo" type="submit">EXCLUIR MINHA CONTA</button>
+        </form>
+    </section>
+</main>
+
+<%- include('../admin/partials/footer') %>

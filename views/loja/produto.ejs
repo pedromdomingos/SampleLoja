@@ -1,0 +1,91 @@
+<%# PÁGINA ÚNICA DE PRODUTO: serve para camisa, disco e instrumento.
+    Variáveis recebidas da rota: produto (o produto do banco), especificacoes (vetor de detalhes) e relacionados (vetor de produtos). %>
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+<%
+    const podeComprar = !usuario || usuario.perfil === 'cliente';
+    const _pagina = paginaDoTipo(produto.tipo_produto);
+    const _caminho = [];
+    if (_pagina) _caminho.push({ t: PAGINAS[_pagina].rotulo, u: '/loja/' + _pagina });
+    _caminho.push({ t: produto.nome });
+%>
+
+<main class="loja-pagina">
+    <div class="migalhas-claro"><%- include('../partials/migalhas', { caminho: _caminho }) %></div>
+
+    <section class="produto-detalhe">
+        <div class="produto-foto">
+            <% if (produto.imagem) { %><img src="/uploads/<%= produto.imagem %>" alt="<%= produto.nome %>"><% } %>
+            <% if (desconto(produto) > 0) { %><em class="off-badge"><%= desconto(produto) %>% OFF</em><% } %>
+        </div>
+
+        <div class="produto-info">
+            <span class="eyebrow"><%= produto.categoria %></span>
+            <h1><%= produto.nome %></h1>
+            <p class="produto-linha">
+                <% if (produto.artista) { %><%= produto.artista %><% } %>
+                <% if (produto.genero) { %> · <%= produto.genero %><% } %>
+                <% if (produto.ano_lancamento) { %> · <%= produto.ano_lancamento %><% } %>
+            </p>
+            <% if (produto.avaliacao > 0) { %>
+                <div class="stars stars-grande"><% for (let i = 1; i <= 5; i++) { %><i class="bi bi-star-fill <%= i <= Math.round(produto.avaliacao) ? '' : 'off' %>"></i><% } %></div>
+            <% } %>
+
+            <div class="produto-preco">
+                <% if (produto.valor_promocional) { %><s><%= brl(produto.valor) %></s><% } %>
+                <strong><%= brl(precoFinal(produto)) %></strong>
+            </div>
+
+            <% if (produto.estoque > 0) { %>
+                <p class="produto-estoque <%= produto.estoque <= 5 ? 'baixo' : '' %>">
+                    <%= produto.estoque <= 5 ? 'Últimas ' + produto.estoque + ' unidades!' : 'Em estoque' %>
+                </p>
+            <% } else { %>
+                <p class="produto-estoque indisponivel">Indisponível no momento</p>
+            <% } %>
+
+            <% if (podeComprar && produto.estoque > 0) { %>
+                <form action="/carrinho/adicionar" method="POST" class="produto-compra">
+                    <input type="hidden" name="produto_id" value="<%= produto.id %>">
+                    <input type="hidden" name="voltar" value="<%= caminhoAtual %>">
+                    <div class="qtd-label">Quantidade
+                        <div class="qtd-step" data-qtd>
+                            <button type="button" data-menos aria-label="Diminuir">−</button>
+                            <input type="number" name="quantidade" value="1" min="1" max="<%= produto.estoque %>" aria-label="Quantidade">
+                            <button type="button" data-mais aria-label="Aumentar">+</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="sample-button sample-button-ghost">ADICIONAR AO CARRINHO</button>
+                    <button type="submit" name="comprar_agora" value="1" class="sample-button sample-button-red">COMPRAR AGORA</button>
+                </form>
+            <% } else if (!podeComprar) { %>
+                <p class="muted">Você está vendo a loja como <%= usuario.perfil === 'admin' ? 'administrador' : 'funcionário' %>. Para comprar, entre com uma conta de cliente.</p>
+            <% } %>
+
+            <h2 class="produto-subtitulo">Descrição</h2>
+            <p class="produto-descricao"><%= produto.descricao %></p>
+
+            <% if (especificacoes.length || produto.gravadora || produto.peso) { %>
+                <h2 class="produto-subtitulo">Especificações</h2>
+                <dl class="data-list produto-specs">
+                    <%# forEach: repete uma linha (nome + valor) para cada item do vetor especificacoes %>
+                    <% especificacoes.forEach(e => { %><dt><%= e.rotulo %></dt><dd><%= e.valor %></dd><% }) %>
+                    <% if (produto.gravadora) { %><dt>Gravadora</dt><dd><%= produto.gravadora %></dd><% } %>
+                    <% if (produto.peso) { %><dt>Peso</dt><dd><%= produto.peso %> g</dd><% } %>
+                </dl>
+            <% } %>
+        </div>
+    </section>
+
+    <% if (relacionados.length) { %>
+        <h2 class="store-title relacionados-titulo">VOCÊ TAMBÉM PODE GOSTAR</h2>
+        <div class="produto-grid">
+            <% relacionados.forEach(p => { %>
+                <%- include('../partials/loja-card', { p: p, podeComprar: podeComprar, voltarPara: caminhoAtual, selo: '' }) %>
+            <% }) %>
+        </div>
+    <% } %>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

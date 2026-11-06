@@ -1,0 +1,19 @@
+<%# Aviso para o cliente cadastrar o endereço de entrega. Pode ser fechado. %>
+<% if (typeof avisoEndereco !== 'undefined' && avisoEndereco && !(typeof esconderAviso !== 'undefined' && esconderAviso)) { %>
+<aside class="sample-toast" id="avisoEndereco" role="status">
+    <button type="button" class="sample-toast-close" id="avisoEnderecoFechar" aria-label="Fechar aviso">&times;</button>
+    <span class="eyebrow">FALTA SÓ UM PASSO</span>
+    <p>Cadastre seu <strong>endereço de entrega</strong> para comprar mais rápido. Se preferir, faça isso depois em <strong>Configurações</strong>.</p>
+    <a href="/conta/configuracoes" class="sample-button sample-button-red">CADASTRAR ENDEREÇO</a>
+</aside>
+<script>
+(function () {
+    var aviso = document.getElementById('avisoEndereco');
+    document.getElementById('avisoEnderecoFechar').addEventListener('click', function () {
+        aviso.remove();
+        // avisa o servidor para não mostrar de novo nesta sessão
+        fetch('/conta/aviso-endereco/fechar', { method: 'POST' });
+    });
+})();
+</script>
+<% } %>

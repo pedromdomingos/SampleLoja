@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading heading-with-action">
+        <div><span class="eyebrow">CATÁLOGO</span><h1>PRODUTOS</h1><p>Produtos novos com especificações próprias para cada categoria.</p></div>
+        <a href="/admin/produtos/form-cadastrar" class="sample-button sample-button-red">+ NOVO PRODUTO</a>
+    </section>
+
+    <section class="sample-panel">
+        <div class="table-wrap"><table class="sample-table">
+            <thead><tr><th>ID</th><th>Imagem</th><th>Produto</th><th>Categoria</th><th>Gênero</th><th>Preço</th><th>Estoque</th><th>Ações</th></tr></thead>
+            <tbody>
+            <% produtos.forEach(p => { %>
+                <tr>
+                    <td>#<%= p.id %></td>
+                    <td><% if (p.imagem) { %><img src="/uploads/<%= p.imagem %>" alt="<%= p.nome %>" class="product-thumb"><% } else { %>—<% } %></td>
+                    <td><strong><%= p.nome %></strong><br><span class="muted"><%= p.artista || '—' %></span><% if (p.destaque) { %><span class="sample-badge yellow">DESTAQUE</span><% } %></td>
+                    <td><%= p.categoria %><br><span class="muted"><%= (tipos[p.tipo_produto] || tipos.outros).rotulo %></span></td>
+                    <td><%= p.genero || '—' %></td>
+                    <td><% if (p.valor_promocional) { %><s class="muted">R$ <%= Number(p.valor).toFixed(2) %></s><br><strong>R$ <%= Number(p.valor_promocional).toFixed(2) %></strong><% } else { %>R$ <%= Number(p.valor).toFixed(2) %><% } %></td>
+                    <td><span class="sample-badge <%= p.estoque <= 5 ? 'red' : 'green' %>"><%= p.estoque %></span></td>
+                    <td><form action="/admin/produtos/<%= p.id %>/excluir" method="POST" onsubmit="return confirm('Excluir este produto?');"><button class="table-action danger" type="submit">Excluir</button></form></td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table></div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

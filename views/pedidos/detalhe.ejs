@@ -1,0 +1,87 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+
+<%- include('../partials/cabecalho-pagina', {
+    caminho: [{ t: 'Meus pedidos', u: '/pedidos' }, { t: 'Pedido #' + pedido.id }],
+    titulo: novo ? 'PEDIDO CONFIRMADO' : 'PEDIDO #' + pedido.id,
+    texto: novo ? 'Obrigado pela compra! O pedido #' + pedido.id + ' foi registrado e está logo abaixo.' : '',
+    pills: [], etapa: novo ? 3 : 0, etapaFeita: novo
+}) %>
+
+<main class="loja-pagina">
+    <p class="pedido-status-linha">Status: <span class="status-pedido status-<%= slugStatus(pedido.status) %>"><%= pedido.status %></span></p>
+
+    <section class="sample-panel">
+        <div class="panel-heading"><h2>ACOMPANHAR ENTREGA</h2></div>
+        <%- include('../partials/linha-do-tempo') %>
+        <div class="rastreio-caixa">
+            <span class="muted">Código de rastreio</span>
+            <strong class="rastreio-codigo"><%= pedido.codigo_rastreio %></strong>
+        </div>
+    </section>
+
+    <% if (pedido.status === 'Aguardando pagamento') { %>
+        <section class="sample-panel pagamento-caixa">
+            <div class="panel-heading"><h2>PAGAMENTO - <%= formas[pedido.forma_pagamento].toUpperCase() %></h2></div>
+            <% if (pedido.forma_pagamento === 'pix') { %>
+                <p class="muted">PIX simulado. Em uma loja real, aqui apareceria o QR Code.</p>
+                <code class="pagamento-codigo">00020126580014BR.GOV.BCB.PIX0136sample-<%= pedido.id %>-simulado5204000053039865802BR</code>
+            <% } else if (pedido.forma_pagamento === 'boleto') { %>
+                <p class="muted">Boleto simulado. Em uma loja real, aqui apareceria o código de barras.</p>
+                <code class="pagamento-codigo">23793.38128 60000.000003 00000.000408 1 <%= String(pedido.id).padStart(14, '0') %></code>
+            <% } else { %>
+                <p class="muted">Cartão de crédito simulado. Nenhum dado de cartão é pedido ou guardado.</p>
+            <% } %>
+            <p>Total a pagar: <strong><%= brl(pedido.total) %></strong></p>
+            <form action="/pedidos/<%= pedido.id %>/pagar" method="POST">
+                <button type="submit" class="sample-button sample-button-red">SIMULAR PAGAMENTO</button>
+            </form>
+        </section>
+    <% } %>
+
+    <div class="account-grid">
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>ITENS</h2></div>
+            <% itens.forEach(i => { %>
+                <div class="resumo-item">
+                    <span><%= i.quantidade %> × <%= i.nome %></span>
+                    <strong><%= brl(i.preco_unitario * i.quantidade) %></strong>
+                </div>
+            <% }) %>
+            <dl class="resumo-linhas">
+                <dt>Subtotal</dt><dd><%= brl(pedido.subtotal) %></dd>
+                <dt>Frete</dt><dd><%= brl(pedido.frete) %></dd>
+                <dt class="resumo-total">Total</dt><dd class="resumo-total"><%= brl(pedido.total) %></dd>
+            </dl>
+        </section>
+
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>ENTREGA</h2></div>
+            <div class="address-card">
+                <strong><%= pedido.dest_nome %></strong><br>
+                <%= pedido.dest_rua %>, <%= pedido.dest_numero %><%= pedido.dest_complemento ? ' — ' + pedido.dest_complemento : '' %><br>
+                <%= pedido.dest_bairro %> — <%= pedido.dest_cidade %>/<%= pedido.dest_estado %> — CEP <%= pedido.dest_cep %><br>
+                <span>Tel. <%= pedido.dest_telefone %></span>
+            </div>
+            <p class="muted">Pedido feito em <%= pedido.criado_em %>.</p>
+            <% if (podeCancelar) { %>
+                <form action="/pedidos/<%= pedido.id %>/cancelar" method="POST" onsubmit="return confirm('Cancelar este pedido?');">
+                    <button type="submit" class="sample-button sample-button-ghost button-perigo">CANCELAR PEDIDO</button>
+                </form>
+                <p class="muted">Você pode cancelar até o pedido ser enviado.</p>
+            <% } %>
+        </section>
+    </div>
+
+    <section class="sample-panel">
+        <div class="panel-heading"><h2>HISTÓRICO</h2></div>
+        <ul class="historico-lista">
+            <% historico.slice().reverse().forEach(h => { %>
+                <li><strong><%= h.status %></strong> <span class="muted"><%= h.criado_em %></span><br><%= h.observacao %></li>
+            <% }) %>
+        </ul>
+    </section>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

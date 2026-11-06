@@ -1,0 +1,16 @@
+<%# Etapas da compra, no estilo do rastreio. Recebe: etapa (1 = Carrinho, 2 = Entrega e pagamento, 3 = Confirmação) e etapaFeita (true marca a 3 como concluída) %>
+<%
+    const _nomes = ['Carrinho', 'Entrega e pagamento', 'Confirmação'];
+%>
+<ol class="etapas" aria-label="Etapas da compra">
+    <% _nomes.forEach((nome, i) => {
+        const n = i + 1;
+        const feita = n < etapa || (etapaFeita && n === etapa);
+        const atual = n === etapa && !etapaFeita;
+    %>
+        <li class="<%= feita ? 'feita' : '' %> <%= atual ? 'atual' : '' %>"<%- atual ? ' aria-current="step"' : '' %>>
+            <span class="etapa-ponto"><% if (feita) { %><i class="bi bi-check-lg"></i><% } else { %><%= n %><% } %></span>
+            <strong><%= nome %></strong>
+        </li>
+    <% }) %>
+</ol>

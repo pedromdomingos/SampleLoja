@@ -1,0 +1,14 @@
+<%# Cabeçalho escuro das páginas internas. Recebe: caminho (migalhas), titulo, texto, pills ([{t,u,ativo}]) e etapa (0 = sem etapas), etapaFeita %>
+<section class="ph">
+    <div class="ph-in">
+        <%- include('migalhas', { caminho: caminho }) %>
+        <% if (titulo) { %><h1><%- titulo %></h1><% } %>
+        <% if (texto) { %><p class="ph-texto"><%= texto %></p><% } %>
+        <% if (pills && pills.length) { %>
+            <div class="ph-pills">
+                <% pills.forEach(p => { %><a href="<%= p.u %>" class="<%= p.ativo ? 'is-active' : '' %>"><%= p.t %></a><% }) %>
+            </div>
+        <% } %>
+        <% if (etapa) { %><%- include('etapas-compra', { etapa: etapa, etapaFeita: etapaFeita }) %><% } %>
+    </div>
+</section>

@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading heading-with-action">
+        <div><span class="eyebrow">ACESSOS</span><h1>USUÁRIOS</h1><p>Controle as contas internas da SAMPLE.</p></div>
+        <a href="/admin/usuarios/form-cadastrar" class="sample-button sample-button-red">+ NOVO USUÁRIO</a>
+    </section>
+    <section class="sample-panel">
+        <div class="table-wrap"><table class="sample-table">
+            <thead><tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Situação</th><th>Ações</th></tr></thead>
+            <tbody><% usuarios.forEach(u => { %><tr>
+                <td>#<%= u.id %></td><td><strong><%= u.nome %></strong><br><span class="muted"><%= u.telefone || 'Sem telefone' %></span></td><td><%= u.email %></td>
+                <td><span class="sample-badge"><%= u.perfil %></span></td><td><span class="sample-badge <%= u.ativo ? 'green' : 'red' %>"><%= u.ativo ? 'ATIVO' : 'DESATIVADO' %></span></td>
+                <td><% if (u.id !== usuario.id) { %><form action="/admin/usuarios/<%= u.id %>/alternar-ativo" method="POST"><button class="table-action <%= u.ativo ? 'danger' : 'success' %>" type="submit"><%= u.ativo ? 'Desativar' : 'Ativar' %></button></form><% } else { %><span class="muted">Sua conta</span><% } %></td>
+            </tr><% }) %></tbody>
+        </table></div>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

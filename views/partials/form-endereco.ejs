@@ -1,0 +1,34 @@
+<%# Campos de endereço de entrega (RF11). Usado em Configurações e na compra. %>
+<% const e = (typeof dados !== 'undefined' && dados) ? dados : {}; %>
+<div class="field"><label>Nome completo do destinatário *</label><input type="text" name="destinatario" value="<%= e.destinatario || '' %>" required></div>
+<div class="field"><label>Telefone *</label><input type="text" name="telefone" maxlength="15" placeholder="(49) 90000-0000" value="<%= e.telefone || '' %>" required></div>
+<div class="form-grid form-grid-4">
+    <div class="field"><label>CEP *</label><input type="text" name="cep" maxlength="9" value="<%= e.cep || '' %>" required></div>
+    <div class="field"><label>Estado (UF) *</label><input type="text" name="estado" maxlength="2" placeholder="SC" value="<%= e.estado || '' %>" required></div>
+    <div class="field"><label>Cidade *</label><input type="text" name="cidade" value="<%= e.cidade || '' %>" required></div>
+    <div class="field"><label>Bairro *</label><input type="text" name="bairro" value="<%= e.bairro || '' %>" required></div>
+</div>
+<div class="form-grid form-grid-3">
+    <div class="field"><label>Rua *</label><input type="text" name="rua" value="<%= e.rua || '' %>" required></div>
+    <div class="field"><label>Número *</label><input type="text" name="numero" value="<%= e.numero || '' %>" required></div>
+    <div class="field">
+        <label>Complemento *</label>
+        <input type="text" name="complemento" data-complemento value="<%= (e.complemento && e.complemento !== 'Sem complemento') ? e.complemento : '' %>">
+        <label class="check-inline"><input type="checkbox" name="sem_complemento" value="1" data-sem-complemento <%= e.complemento === 'Sem complemento' ? 'checked' : '' %>> Sem complemento</label>
+    </div>
+</div>
+<script>
+(function () {
+    // "Sem complemento": desliga o campo de texto (e ele deixa de ser obrigatório)
+    document.querySelectorAll('[data-sem-complemento]').forEach(function (caixa) {
+        var campo = caixa.closest('.field').querySelector('[data-complemento]');
+        function atualizar() {
+            campo.disabled = caixa.checked;
+            campo.required = !caixa.checked;
+            if (caixa.checked) campo.value = '';
+        }
+        caixa.addEventListener('change', atualizar);
+        atualizar();
+    });
+})();
+</script>

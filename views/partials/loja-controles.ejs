@@ -1,0 +1,17 @@
+<%# "Ordenar por" e "Filtros" (o painel de filtros abre logo abaixo do botão). Recebe: ORDENS, ordem, qtdFiltros, secoes, selecionados e mostrarPromocao %>
+<div class="loja-controles">
+    <div class="dd-ordenar">
+        <button type="button" class="ctrl-btn" id="btnOrdenar" aria-haspopup="true" aria-expanded="false">Ordenar por <i class="bi bi-chevron-down"></i></button>
+        <div class="dd-menu" id="menuOrdenar" hidden>
+            <% Object.keys(ORDENS).forEach(chave => { %>
+                <label class="dd-opcao <%= chave === ordem ? 'is-active' : '' %>"><input type="radio" name="ordem" value="<%= chave %>" <%= chave === ordem ? 'checked' : '' %>><%= ORDENS[chave].rotulo %></label>
+            <% }) %>
+        </div>
+    </div>
+    <div class="dd-filtros">
+        <button type="button" class="ctrl-btn" id="alternarFiltros" aria-expanded="false" aria-controls="painelFiltros">
+            Filtros<span id="contadorFiltros"><%= qtdFiltros ? ' (' + qtdFiltros + ')' : '' %></span> <i class="bi bi-sliders"></i>
+        </button>
+        <%- include('filtros-painel', { secoes: secoes, selecionados: selecionados, mostrarPromocao: mostrarPromocao }) %>
+    </div>
+</div>

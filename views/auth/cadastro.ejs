@@ -1,0 +1,32 @@
+<%- include('../admin/partials/header') %>
+
+<main class="auth-page">
+    <section class="auth-card auth-card-wide">
+        <div class="auth-brand">SAMPLE</div>
+        <span class="eyebrow">NOVA CONTA</span>
+        <h1>ENTRE PARA O<br><span>ROCK</span></h1>
+        <p class="auth-subtitle">Crie sua conta para comprar na SAMPLE.</p>
+
+        <% if (erro) { %>
+            <div class="sample-alert sample-alert-danger"><%= erro %></div>
+        <% } %>
+
+        <form action="/cadastro" method="POST" class="sample-form">
+            <div class="form-section-title">Dados pessoais</div>
+            <div class="form-grid form-grid-2">
+                <div class="field field-full"><label>Nome completo</label><input type="text" name="nome" value="<%= dados.nome || '' %>" required></div>
+                <div class="field"><label>E-mail</label><input type="email" name="email" value="<%= dados.email || '' %>" required></div>
+                <div class="field"><label>Telefone</label><input type="text" name="telefone" maxlength="15" placeholder="(49) 90000-0000" value="<%= dados.telefone || '' %>" required></div>
+                <div class="field"><label>Senha</label><input type="password" name="senha" minlength="8" required></div>
+                <div class="field"><label>Confirmar senha</label><input type="password" name="confirmar_senha" minlength="8" required></div>
+            </div>
+
+            <button class="sample-button sample-button-red" type="submit">CRIAR CONTA</button>
+        </form>
+
+        <div class="auth-links">Já possui uma conta? <a href="/login">Entrar</a></div>
+        <div class="auth-links"><a href="/">Voltar para a loja</a></div>
+    </section>
+</main>
+
+<%- include('../admin/partials/footer') %>

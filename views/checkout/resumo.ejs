@@ -1,0 +1,60 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+<% const cpfFormatado = cpf ? cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : ''; %>
+
+<%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Carrinho', u: '/carrinho' }, { t: 'Pagamento' }], titulo: 'FINALIZAR COMPRA', texto: 'Confira o pedido, informe o CPF e escolha como pagar.', pills: [], etapa: 2, etapaFeita: false }) %>
+
+<main class="loja-pagina">
+
+    <form action="/checkout/confirmar" method="POST" class="carrinho-grid">
+        <div>
+            <section class="sample-panel">
+                <div class="panel-heading"><h2>ENTREGA</h2><a class="link-mostarda" href="/checkout/endereco">Trocar endereço</a></div>
+                <div class="address-card">
+                    <strong><%= endereco.destinatario %></strong><br>
+                    <%= endereco.rua %>, <%= endereco.numero %><%= endereco.complemento ? ' — ' + endereco.complemento : '' %><br>
+                    <%= endereco.bairro %> — <%= endereco.cidade %>/<%= endereco.estado %> — CEP <%= endereco.cep %><br>
+                    <span>Tel. <%= endereco.telefone %></span>
+                </div>
+                <p class="muted">Frete para <%= frete.regiao.nome %> (<%= frete.kg %> kg).</p>
+            </section>
+
+            <section class="sample-panel">
+                <div class="panel-heading"><h2>ITENS</h2><a class="link-mostarda" href="/carrinho">Editar carrinho</a></div>
+                <% itens.forEach(i => { %>
+                    <div class="resumo-item">
+                        <span><%= i.quantidade %> × <%= i.produto.nome %></span>
+                        <strong><%= brl(i.preco * i.quantidade) %></strong>
+                    </div>
+                <% }) %>
+            </section>
+        </div>
+
+        <aside class="sample-panel carrinho-resumo sample-form">
+            <div class="panel-heading"><h2>PAGAMENTO</h2></div>
+
+            <% Object.keys(formas).forEach((chave, indice) => { %>
+                <label class="radio-card">
+                    <input type="radio" name="forma" value="<%= chave %>" <%= indice === 0 ? 'checked' : '' %> required>
+                    <span><strong><%= formas[chave] %></strong></span>
+                </label>
+            <% }) %>
+            <p class="muted">O pagamento é simulado: depois de confirmar, você usa o botão "Simular pagamento".</p>
+
+            <div class="field">
+                <label>CPF * (só é pedido na compra)</label>
+                <input type="text" name="cpf" maxlength="14" placeholder="000.000.000-00" value="<%= cpfFormatado %>" required>
+            </div>
+
+            <dl class="resumo-linhas">
+                <dt>Subtotal</dt><dd><%= brl(subtotal) %></dd>
+                <dt>Frete</dt><dd><%= frete.gratis ? 'Grátis' : brl(frete.valor) %></dd>
+                <dt class="resumo-total">Total</dt><dd class="resumo-total"><%= brl(total) %></dd>
+            </dl>
+            <button type="submit" class="sample-button sample-button-red resumo-botao">CONFIRMAR PEDIDO</button>
+        </aside>
+    </form>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

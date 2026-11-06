@@ -1,0 +1,30 @@
+<%- include('partials/header') %>
+<%- include('partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading">
+        <span class="eyebrow">ENTREGA</span><h1>FRETE</h1>
+        <p>O frete de cada pedido = valor base da região + valor por kg × kg do pedido (peso total arredondado para cima, mínimo 1 kg). A região vem do estado do endereço. Pode mudar quando quiser: vale para os próximos pedidos.</p>
+    </section>
+
+    <section class="sample-panel">
+        <form action="/admin/frete" method="POST" class="sample-form">
+            <div class="table-wrap"><table class="sample-table">
+                <thead><tr><th>Região</th><th>Estados</th><th>Valor base (R$)</th><th>Por kg (R$)</th></tr></thead>
+                <tbody>
+                <% regioes.forEach(r => { %>
+                    <tr>
+                        <td><strong><%= r.nome %></strong></td>
+                        <td><span class="muted"><%= r.ufs.split(',').join(', ') %></span></td>
+                        <td><input type="number" name="base_<%= r.id %>" value="<%= r.valor_base %>" min="0" step="0.01" required class="input-tabela"></td>
+                        <td><input type="number" name="kg_<%= r.id %>" value="<%= r.valor_kg %>" min="0" step="0.01" required class="input-tabela"></td>
+                    </tr>
+                <% }) %>
+                </tbody>
+            </table></div>
+            <div class="button-row"><button type="submit" class="sample-button sample-button-red">SALVAR TABELA</button></div>
+        </form>
+    </section>
+</main>
+
+<%- include('partials/footer') %>

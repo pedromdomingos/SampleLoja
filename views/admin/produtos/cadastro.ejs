@@ -1,0 +1,98 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading">
+        <span class="eyebrow">CATÁLOGO / PRODUTOS</span>
+        <h1>NOVO PRODUTO</h1>
+        <p>Os campos de especificação mudam conforme o tipo da categoria. Todos os produtos da SAMPLE são novos.</p>
+    </section>
+
+    <section class="sample-panel">
+        <form action="/admin/produtos/cadastrar" method="POST" enctype="multipart/form-data" class="sample-form" id="produtoForm">
+            <div class="form-section-title">Informações principais</div>
+            <div class="form-grid form-grid-2">
+                <div class="field"><label>Nome do produto *</label><input type="text" name="nome" required placeholder="Ex.: Fender Stratocaster"></div>
+                <div class="field"><label>Categoria *</label>
+                    <select name="categoria" id="categoria" required>
+                        <option value="" data-tipo="">Selecione uma categoria</option>
+                        <% categorias.forEach(c => { %><option value="<%= c.nome %>" data-tipo="<%= c.tipo || 'outros' %>"><%= c.nome %></option><% }) %>
+                    </select>
+                </div>
+                <div class="field"><label>Artista / Banda</label><input type="text" name="artista" placeholder="Ex.: Led Zeppelin"></div>
+                <div class="field"><label>Gênero</label>
+                    <select name="genero">
+                        <option value="">Selecione</option><option>Rock Clássico</option><option>Hard Rock</option><option>Heavy Metal</option><option>Punk Rock</option><option>Rock Alternativo</option><option>Grunge</option><option>Rock Progressivo</option><option>Indie Rock</option><option>Rock Nacional</option><option>Outro</option>
+                    </select>
+                </div>
+                <div class="field"><label>Ano de lançamento *</label><input type="number" name="ano_lancamento" min="1900" max="2100" placeholder="Ex.: 1971" required></div>
+                <div class="field"><label>Gravadora</label><input type="text" name="gravadora" placeholder="Ex.: Atlantic Records"></div>
+                <div class="field field-full"><label>Descrição *</label><textarea name="descricao" rows="4" required placeholder="Descreva o produto, seus diferenciais e especificações..."></textarea></div>
+            </div>
+
+            <%# Um bloco por tipo, gerado a partir de util/tipos.js. Só o do tipo da categoria escolhida aparece. %>
+            <% Object.keys(tipos).forEach(chave => { const t = tipos[chave]; if (!t.campos.length) return; %>
+            <div class="dynamic-product-fields" data-type="<%= chave %>">
+                <div class="form-section-title"><%= t.titulo %></div>
+                <div class="form-grid form-grid-4">
+                    <% t.campos.forEach(c => { %>
+                    <div class="field">
+                        <label><%= c.rotulo %><%= c.obrigatorio ? ' *' : '' %></label>
+                        <% if (c.tipo === 'select') { %>
+                            <select name="<%= c.nome %>" data-obrigatorio="<%= c.obrigatorio ? 1 : 0 %>">
+                                <option value="">Selecione</option>
+                                <% c.opcoes.forEach(o => { %><option><%= o %></option><% }) %>
+                            </select>
+                        <% } else { %>
+                            <input type="<%= c.tipo === 'numero' ? 'number' : 'text' %>" name="<%= c.nome %>" data-obrigatorio="<%= c.obrigatorio ? 1 : 0 %>" <%= c.tipo === 'numero' ? 'min=1 step=1' : '' %> placeholder="<%= c.placeholder || '' %>">
+                        <% } %>
+                    </div>
+                    <% }) %>
+                </div>
+            </div>
+            <% }) %>
+
+            <div class="form-section-title">Preço, estoque e logística</div>
+            <div class="form-grid form-grid-4">
+                <div class="field"><label>Valor (R$) *</label><input type="number" name="valor" step="0.01" min="0" required></div>
+                <div class="field"><label>Valor promocional (R$)</label><input type="number" name="valor_promocional" step="0.01" min="0"></div>
+                <div class="field"><label>Estoque *</label><input type="number" name="estoque" min="0" required></div>
+                <div class="field"><label>Peso (g) *</label><input type="number" name="peso" min="1" step="1" required></div>
+            </div>
+
+            <div class="form-grid form-grid-2">
+                <div class="field"><label>Imagem *</label><input type="file" name="imagem" accept="image/*" required></div>
+                <label class="check-field"><input type="checkbox" name="destaque" value="1"><span>Produto em destaque na página inicial</span></label>
+            </div>
+
+            <div class="button-row"><button class="sample-button sample-button-red" type="submit">CADASTRAR PRODUTO</button><a href="/admin/produtos" class="sample-button sample-button-ghost">CANCELAR</a></div>
+        </form>
+    </section>
+</main>
+
+<script>
+(function () {
+    var categoria = document.getElementById('categoria');
+    var blocos = document.querySelectorAll('.dynamic-product-fields');
+
+    // Mostra só o bloco do tipo da categoria escolhida; campos escondidos não são enviados
+    // e os marcados como obrigatórios (data-obrigatorio) passam a ser "required" quando o bloco está visível.
+    function atualizarCampos() {
+        var selecionada = categoria.options[categoria.selectedIndex];
+        var tipo = selecionada ? (selecionada.dataset.tipo || '') : '';
+        blocos.forEach(function (bloco) {
+            var ativo = bloco.dataset.type === tipo;
+            bloco.classList.toggle('is-visible', ativo);
+            bloco.querySelectorAll('input, select').forEach(function (campo) {
+                campo.disabled = !ativo;
+                campo.required = ativo && campo.dataset.obrigatorio === '1';
+            });
+        });
+    }
+
+    categoria.addEventListener('change', atualizarCampos);
+    atualizarCampos();
+})();
+</script>
+
+<%- include('../partials/footer') %>

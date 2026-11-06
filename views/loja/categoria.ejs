@@ -1,0 +1,36 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+<%
+    const podeComprar = !usuario || usuario.perfil === 'cliente';
+    const qtdFiltros = Object.keys(selecionados).reduce((t, k) => t + selecionados[k].length, 0);
+    const secoes = config.filtros.map(f => ({ campo: f.campo, rotulo: f.rotulo, opcoes: opcoes[f.campo] || [] }));
+    const pills = Object.keys(PAGINAS).map(k => ({ t: PAGINAS[k].rotulo, u: '/loja/' + k, ativo: k === pagina }));
+%>
+<%- include('../partials/cabecalho-pagina', { caminho: [{ t: config.rotulo }], titulo: config.titulo, texto: config.descricao, pills: pills, etapa: 0, etapaFeita: false }) %>
+
+<main class="loja-pagina">
+    <form method="GET" action="/loja/<%= pagina %>" id="formFiltros" data-lista>
+        <div class="loja-toolbar">
+            <p class="resultado-info" id="resultadoInfo" aria-live="polite"><%= total %> produto<%= total === 1 ? '' : 's' %></p>
+            <%- include('../partials/loja-controles', { ORDENS: ORDENS, ordem: ordem, qtdFiltros: qtdFiltros, secoes: secoes, selecionados: selecionados, mostrarPromocao: true }) %>
+        </div>
+        <div class="chips-ativos" id="chipsAtivos"></div>
+
+        <div class="loja-corpo">
+            <div class="loja-resultados" id="resultados">
+                <% if (produtos.length === 0) { %>
+                    <div class="empty-state loja-vazio">Nenhum produto encontrado<%= qtdFiltros ? ' com esses filtros' : ' nesta categoria ainda' %>.</div>
+                <% } else { %>
+                    <div class="produto-grid">
+                        <% produtos.forEach(p => { %>
+                            <%- include('../partials/loja-card', { p: p, podeComprar: podeComprar, voltarPara: caminhoAtual, selo: '' }) %>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </form>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

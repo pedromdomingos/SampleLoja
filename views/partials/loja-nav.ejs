@@ -1,0 +1,54 @@
+<%# Cabeçalho da loja (fixo no topo, vidro): logo, menu, busca, conta e carrinho %>
+<header class="loja-header" id="lojaHeader">
+<nav class="store-nav" aria-label="Principal">
+    <a class="logo-link" href="/"><img src="/img/logo-nav.png" alt="SAMPLE" class="logo-img"></a>
+
+    <button type="button" class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="navLinks"><i class="bi bi-list"></i></button>
+
+    <div class="nav-links" id="navLinks">
+        <div class="nav-dd">
+            <button type="button" class="nav-dd-btn" aria-expanded="false" aria-haspopup="true">Categorias <i class="bi bi-chevron-down"></i></button>
+            <div class="nav-dd-menu">
+                <a href="/loja/roupas">Roupas</a>
+                <a href="/loja/instrumentos">Instrumentos</a>
+                <a href="/loja/discos">Discos</a>
+            </div>
+        </div>
+        <a href="/#mais-vendidos">Mais Vendidos</a>
+        <a href="/#promocoes">Promoções</a>
+        <a href="/#sobre">Sobre</a>
+    </div>
+
+    <form class="store-search" action="/busca" method="GET" role="search" id="formBusca">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="search" name="q" value="<%= typeof termo !== 'undefined' ? termo : '' %>" placeholder="Buscar produtos" aria-label="Buscar produtos" maxlength="60" autocomplete="off" id="campoBusca">
+        <button type="submit" class="sr-only">Buscar</button>
+        <div class="busca-sugestoes" id="buscaSugestoes" hidden role="listbox"></div>
+    </form>
+
+    <div class="store-actions">
+        <a href="/carrinho" class="icone-btn store-cart" aria-label="Carrinho<%= carrinhoQtd > 0 ? ' (' + carrinhoQtd + ' itens)' : '' %>">
+            <i class="bi bi-cart3"></i><% if (carrinhoQtd > 0) { %><span class="cart-badge"><%= carrinhoQtd %></span><% } %>
+        </a>
+        <div class="user-dd">
+            <button type="button" class="icone-btn user-dd-btn" aria-label="Minha conta" aria-expanded="false" aria-haspopup="true"><i class="bi bi-person"></i></button>
+            <div class="user-dd-menu">
+                <% if (!usuario) { %>
+                    <a href="/login">Entrar</a>
+                    <a href="/cadastro">Criar conta</a>
+                <% } else if (usuario.perfil === 'cliente') { %>
+                    <span class="user-dd-nome"><%= usuario.nome %></span>
+                    <a href="/pedidos">Meus pedidos</a>
+                    <a href="/conta">Minha conta</a>
+                    <a href="/conta/configuracoes">Configurações</a>
+                    <form action="/logout" method="POST"><button type="submit">Sair</button></form>
+                <% } else { %>
+                    <span class="user-dd-nome"><%= usuario.nome %></span>
+                    <a href="/admin/index" class="store-painel"><i class="bi bi-speedometer2"></i> Voltar ao painel</a>
+                    <form action="/logout" method="POST"><button type="submit">Sair</button></form>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</nav>
+</header>

@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading heading-with-action">
+        <div>
+            <span class="eyebrow">PEDIDO</span>
+            <h1>#<%= pedido.id %> <span class="status-pedido status-<%= slugStatus(pedido.status) %>"><%= pedido.status %></span></h1>
+            <p>Cliente: <strong><%= pedido.cliente || 'Conta excluída' %></strong><%= pedido.email ? ' (' + pedido.email + ')' : '' %> · CPF <%= pedido.cpf %></p>
+        </div>
+        <a href="/admin/pedidos" class="sample-button sample-button-ghost">← TODOS OS PEDIDOS</a>
+    </section>
+
+    <section class="sample-panel">
+        <div class="panel-heading"><h2>ANDAMENTO</h2></div>
+        <%- include('../../partials/linha-do-tempo') %>
+        <div class="rastreio-caixa">
+            <span class="muted">Código de rastreio</span>
+            <strong class="rastreio-codigo"><%= pedido.codigo_rastreio %></strong>
+        </div>
+
+        <div class="button-row">
+            <% if (proximo) { %>
+                <form action="/admin/pedidos/<%= pedido.id %>/avancar" method="POST">
+                    <button type="submit" class="sample-button sample-button-red">MARCAR COMO: <%= proximo.toUpperCase() %></button>
+                </form>
+            <% } else if (pedido.status === 'Aguardando pagamento') { %>
+                <p class="muted">Aguardando o cliente pagar. Só depois disso o pedido pode ser separado.</p>
+            <% } %>
+            <% if (podeCancelar) { %>
+                <form action="/admin/pedidos/<%= pedido.id %>/cancelar" method="POST" onsubmit="return confirm('Cancelar o pedido e devolver os itens ao estoque?');">
+                    <button type="submit" class="sample-button sample-button-ghost button-perigo">CANCELAR PEDIDO</button>
+                </form>
+            <% } %>
+        </div>
+    </section>
+
+    <div class="account-grid">
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>ITENS</h2></div>
+            <% itens.forEach(i => { %>
+                <div class="resumo-item"><span><%= i.quantidade %> × <%= i.nome %></span><strong><%= brl(i.preco_unitario * i.quantidade) %></strong></div>
+            <% }) %>
+            <dl class="resumo-linhas">
+                <dt>Subtotal</dt><dd><%= brl(pedido.subtotal) %></dd>
+                <dt>Frete</dt><dd><%= brl(pedido.frete) %></dd>
+                <dt class="resumo-total">Total</dt><dd class="resumo-total"><%= brl(pedido.total) %></dd>
+            </dl>
+            <p class="muted">Pagamento: <%= formas[pedido.forma_pagamento] %> · Peso total: <%= (pedido.peso_total / 1000).toFixed(2).replace('.', ',') %> kg</p>
+        </section>
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>ENTREGA</h2></div>
+            <div class="address-card">
+                <strong><%= pedido.dest_nome %></strong><br>
+                <%= pedido.dest_rua %>, <%= pedido.dest_numero %><%= pedido.dest_complemento ? ' — ' + pedido.dest_complemento : '' %><br>
+                <%= pedido.dest_bairro %> — <%= pedido.dest_cidade %>/<%= pedido.dest_estado %> — CEP <%= pedido.dest_cep %><br>
+                <span>Tel. <%= pedido.dest_telefone %></span>
+            </div>
+            <p class="muted">Pedido feito em <%= pedido.criado_em %>.</p>
+        </section>
+    </div>
+
+    <section class="sample-panel">
+        <div class="panel-heading"><h2>HISTÓRICO</h2></div>
+        <ul class="historico-lista">
+            <% historico.slice().reverse().forEach(h => { %>
+                <li><strong><%= h.status %></strong> <span class="muted"><%= h.criado_em %></span><br><%= h.observacao %></li>
+            <% }) %>
+        </ul>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

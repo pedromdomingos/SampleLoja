@@ -1,0 +1,20 @@
+<%- include('../admin/partials/header') %>
+
+<main class="auth-page auth-login-page">
+    <section class="auth-card">
+        <div class="auth-brand">SAMPLE</div>
+        <span class="eyebrow">RECUPERAR SENHA</span>
+        <p class="auth-subtitle">Informe o e-mail da sua conta. Vamos gerar um código para você criar uma nova senha.</p>
+
+        <% if (erro) { %><div class="sample-alert sample-alert-danger"><%= erro %></div><% } %>
+
+        <form action="/recuperar-senha" method="POST" class="sample-form">
+            <div class="field"><label>E-mail</label><input type="email" name="email" value="<%= email %>" required autofocus></div>
+            <button class="sample-button sample-button-red" type="submit">ENVIAR CÓDIGO</button>
+        </form>
+
+        <div class="auth-links"><a href="/login">Voltar para o login</a></div>
+    </section>
+</main>
+
+<%- include('../admin/partials/footer') %>

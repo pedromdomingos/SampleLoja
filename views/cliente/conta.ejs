@@ -1,0 +1,28 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/navbar-usuario') %>
+
+<main class="admin-main">
+    <section class="admin-heading"><span class="eyebrow">MINHA ÁREA</span><h1>MINHA CONTA</h1><p>Seus dados e pedidos na SAMPLE.</p></section>
+
+    <div class="account-grid">
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>MEUS DADOS</h2></div>
+            <dl class="data-list">
+                <dt>Nome</dt><dd><%= cliente.nome %></dd>
+                <dt>E-mail</dt><dd><%= cliente.email %></dd>
+                <dt>CPF</dt><dd><%= cliente.cpf ? '•••.•••.•••-' + cliente.cpf.slice(-2) : 'Informado só na primeira compra' %></dd>
+                <dt>Telefone</dt><dd><%= cliente.telefone || '—' %></dd>
+            </dl>
+            <p class="muted">Seus endereços de entrega ficam em <a class="link-mostarda" href="/conta/configuracoes">Configurações</a>.</p>
+        </section>
+
+        <section class="sample-panel">
+            <div class="panel-heading"><h2>MEUS PEDIDOS</h2></div>
+            <p class="muted">Acompanhe a entrega dos seus pedidos e veja o código de rastreio.</p>
+            <a href="/pedidos" class="sample-button sample-button-red">VER MEUS PEDIDOS</a>
+            <a href="/" class="sample-button sample-button-ghost">VER A LOJA</a>
+        </section>
+    </div>
+</main>
+
+<%- include('../admin/partials/footer') %>

@@ -1,0 +1,33 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+
+<main class="admin-main">
+    <section class="admin-heading">
+        <span class="eyebrow">VENDAS</span><h1>PEDIDOS</h1><p>Acompanhe os pedidos da loja e atualize o status de cada um.</p>
+    </section>
+
+    <section class="sample-panel">
+        <% if (!pedidos.length) { %>
+            <div class="empty-state">Nenhum pedido ainda.</div>
+        <% } else { %>
+        <div class="table-wrap"><table class="sample-table">
+            <thead><tr><th>Pedido</th><th>Cliente</th><th>Data</th><th>Pagamento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+            <% pedidos.forEach(p => { %>
+                <tr>
+                    <td>#<%= p.id %></td>
+                    <td><strong><%= p.cliente || 'Conta excluída' %></strong><br><span class="muted"><%= p.dest_cidade %>/<%= p.dest_estado %></span></td>
+                    <td><%= p.criado_em %></td>
+                    <td><%= formas[p.forma_pagamento] %></td>
+                    <td><%= brl(p.total) %></td>
+                    <td><span class="status-pedido status-<%= slugStatus(p.status) %>"><%= p.status %></span></td>
+                    <td><a class="table-action" href="/admin/pedidos/<%= p.id %>">Abrir</a></td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table></div>
+        <% } %>
+    </section>
+</main>
+
+<%- include('../partials/footer') %>

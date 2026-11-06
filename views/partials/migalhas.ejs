@@ -1,0 +1,9 @@
+<%# Caminho percorrido: Início / Roupas / ... Recebe: caminho = [{ t: 'texto', u: '/link' }]. O último item não tem link. %>
+<nav class="migalhas" aria-label="Caminho percorrido">
+    <ol>
+        <li><a href="/">Início</a></li>
+        <% caminho.forEach((c, i) => { %>
+            <li<%- i === caminho.length - 1 ? ' aria-current="page"' : '' %>><% if (c.u && i < caminho.length - 1) { %><a href="<%= c.u %>"><%= c.t %></a><% } else { %><%= c.t %><% } %></li>
+        <% }) %>
+    </ol>
+</nav>

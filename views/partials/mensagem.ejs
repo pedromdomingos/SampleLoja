@@ -1,0 +1,8 @@
+<% if (typeof mensagem !== 'undefined' && mensagem) { %>
+    <div class="flash-wrap">
+        <div class="sample-alert sample-alert-<%= mensagem.tipo %> flash-alert">
+            <span><%= mensagem.texto %></span>
+            <button type="button" class="flash-close" aria-label="Fechar" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+    </div>
+<% } %>

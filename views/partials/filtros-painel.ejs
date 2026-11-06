@@ -1,0 +1,30 @@
+<%# Painel lateral de filtros (vinho). Recebe: secoes = [{ campo, rotulo, opcoes: [{valor, rotulo, n}] }], selecionados e mostrarPromocao %>
+<aside class="filtros-lateral" id="painelFiltros" aria-label="Filtros" hidden>
+    <div class="filtros-topo">
+        <strong>Filtros</strong>
+        <button type="button" class="filtros-fechar" id="fecharFiltros" aria-label="Fechar filtros"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <% secoes.forEach((s, i) => { %>
+        <% if (!s.opcoes.length) return; %>
+        <details class="fsec" <%= i < 4 ? 'open' : '' %>>
+            <summary><%= s.rotulo %> <i class="bi bi-chevron-down"></i></summary>
+            <div class="fsec-lista">
+                <% s.opcoes.forEach(o => { %>
+                    <label class="fopt">
+                        <input type="checkbox" name="<%= s.campo %>" value="<%= o.valor %>" data-rotulo="<%= o.rotulo %>" <%= (selecionados[s.campo] || []).map(String).includes(String(o.valor)) ? 'checked' : '' %>>
+                        <span><%= o.rotulo %></span><% if (o.n) { %><em><%= o.n %></em><% } %>
+                    </label>
+                <% }) %>
+            </div>
+        </details>
+    <% }) %>
+    <% if (mostrarPromocao) { %>
+        <div class="fsec fsec-promo">
+            <label class="fopt"><input type="checkbox" name="promocao" value="1" data-rotulo="Só promoções" <%= (selecionados.promocao || []).length ? 'checked' : '' %>><span>Só promoções</span></label>
+        </div>
+    <% } %>
+    <div class="filtros-rodape">
+        <button type="button" class="filtros-limpar" id="limparFiltros">Limpar filtros</button>
+        <noscript><button type="submit" class="sample-button sample-button-red">Aplicar</button></noscript>
+    </div>
+</aside>

@@ -1,0 +1,34 @@
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+
+<%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Meus pedidos' }], titulo: 'MEUS PEDIDOS', texto: '', pills: [], etapa: 0, etapaFeita: false }) %>
+
+<main class="loja-pagina">
+
+    <% if (!pedidos.length) { %>
+        <div class="empty-state loja-vazio">Você ainda não fez nenhum pedido. <a class="link-mostarda" href="/">Ir para a loja</a></div>
+    <% } else { %>
+        <div class="sample-panel">
+            <div class="table-wrap">
+                <table class="sample-table">
+                    <thead><tr><th>Pedido</th><th>Data</th><th>Pagamento</th><th>Total</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                        <% pedidos.forEach(p => { %>
+                            <tr>
+                                <td><strong>#<%= p.id %></strong></td>
+                                <td><%= p.criado_em %></td>
+                                <td><%= formas[p.forma_pagamento] %></td>
+                                <td><%= brl(p.total) %></td>
+                                <td><span class="status-pedido status-<%= slugStatus(p.status) %>"><%= p.status %></span></td>
+                                <td><a class="table-action" href="/pedidos/<%= p.id %>">Acompanhar</a></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <% } %>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>
