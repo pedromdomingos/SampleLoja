@@ -61,88 +61,128 @@ const produtosDeTeste = [
         tipo_instrumento: 'Acessório', marca: 'Sample', modelo: '0.10'
     },
 
-    // ----- Discos / Vinis -----
-    {
-        nome: 'Vinil LP Clássicos do Rock', categoria: 'Discos / Vinis', tipo_produto: 'disco', genero: 'Rock Clássico',
-        valor: 199, valor_promocional: 149, estoque: 20, imagem: 'promo-vinil.jpg', peso: 300, avaliacao: 5, ano_lancamento: 2022,
-        descricao: 'Coletânea de clássicos do rock em vinil de 12 polegadas.',
-        formato: 'Vinil LP', velocidade: '33 RPM', edicao: 'Coletânea'
-    },
-    {
-        nome: 'Vinil LP Hard Rock Essencial', categoria: 'Discos / Vinis', tipo_produto: 'disco', genero: 'Hard Rock',
-        valor: 229, estoque: 12, imagem: 'disco-hardrock.jpg', peso: 320, avaliacao: 4, ano_lancamento: 2021,
-        descricao: 'Os maiores sucessos do hard rock reunidos em um único LP.',
-        formato: 'Vinil LP', velocidade: '33 RPM', edicao: 'Edição especial'
-    },
-    {
-        nome: 'Vinil LP Heavy Metal Antologia', categoria: 'Discos / Vinis', tipo_produto: 'disco', genero: 'Heavy Metal',
-        valor: 249, estoque: 9, imagem: 'disco-metal.jpg', peso: 320, avaliacao: 5, ano_lancamento: 2020,
-        descricao: 'Antologia do heavy metal em vinil, com encarte.',
-        formato: 'Vinil LP', velocidade: '33 RPM', edicao: 'Remasterizada'
-    },
-    {
-        nome: 'CD Rock Nacional Coletânea', categoria: 'Discos / Vinis', tipo_produto: 'disco', genero: 'Rock Nacional',
-        valor: 59.9, estoque: 30, imagem: 'disco-nacional.jpg', peso: 120, avaliacao: 4, ano_lancamento: 2019,
-        descricao: 'Coletânea com os grandes nomes do rock nacional em CD.',
-        formato: 'CD', velocidade: '33 RPM', edicao: 'Coletânea'
-    }
 ].map(p => Object.assign({ artista: '', genero: '', destaque: 0 }, p, { imagem: p.imagem }));
 
 
-// ===== CATÁLOGO V2: mais produtos para a loja ficar cheia (inseridos UMA vez, em qualquer banco, novo ou antigo) =====
-// As imagens são ilustrações (SVG) em public/img. Para usar fotos reais, cadastre o produto pelo painel com a foto.
-const roupa = (nome, artista, genero, publico, tipo_peca, tamanho, cor, modelagem, valor, promo, imagem, extra) => Object.assign({
-    nome, categoria: 'Roupas', tipo_produto: 'roupa', valor, valor_promocional: promo || null, estoque: 18,
-    descricao: `${nome}. Peça da coleção SAMPLE para vestir o rock todo dia.`,
-    imagem, artista, genero, ano_lancamento: 2026, peso: 300, destaque: 0, avaliacao: 4,
-    publico, tipo_peca, tamanho, cor, material: 'Algodão', modelagem
-}, extra || {});
+// ===== CATÁLOGO REAL =====
+// Produtos reais pesquisados em lojas brasileiras (Magazine Luiza e outras). Os preços são de REFERÊNCIA,
+// vistos na pesquisa em novembro de 2026, e mudam nas lojas. As fotos NÃO vêm junto: salve cada foto em
+// public/uploads com o nome do campo "imagem" (veja a LISTA_DE_FOTOS.md). Sem a foto, aparece uma imagem padrão.
+// Este lote entra uma única vez em cada banco (a tabela "sementes" lembra disso).
 
-const instr = (nome, categoria, tipo_produto, valor, promo, imagem, peso, specs, extra) => Object.assign({
-    nome, categoria, tipo_produto, valor, valor_promocional: promo || null, estoque: 10, imagem, peso, ano_lancamento: 2026,
-    descricao: `${nome}. Equipamento SAMPLE para botar o seu som no volume máximo.`, artista: '', genero: '', destaque: 0, avaliacao: 5
-}, specs, extra || {});
+// roupa(nome, banda, gênero musical, tipo da peça, cor, preço, preço promocional, arquivo da foto)
+function roupa(nome, artista, genero, tipo_peca, cor, valor, promo, imagem, destaque) {
+    return {
+        nome, categoria: 'Roupas', tipo_produto: 'roupa', valor, valor_promocional: promo || null, estoque: 15, imagem,
+        descricao: nome + '. Peça de banda para quem vive o rock todo dia.',
+        artista, genero, peso: tipo_peca === 'Moletom' ? 700 : 250, destaque: destaque ? 1 : 0, avaliacao: 0,
+        publico: 'Unissex', tipo_peca, tamanho: 'M', cor, modelagem: 'Tradicional'
+    };
+}
 
-const disco = (nome, genero, valor, promo, imagem, formato, velocidade, edicao, ano, extra) => Object.assign({
-    nome, categoria: 'Discos / Vinis', tipo_produto: 'disco', valor, valor_promocional: promo || null, estoque: 14, imagem, peso: formato === 'CD' ? 120 : 320,
-    descricao: `${nome}. ${edicao}, para ouvir do jeito que o rock merece.`, artista: '', genero, ano_lancamento: ano, destaque: 0, avaliacao: 5,
-    formato, velocidade, edicao
-}, extra || {});
+// instrumento(nome, categoria, tipo, preço, preço promocional, foto, peso, descrição, campos específicos)
+function instrumento(nome, categoria, tipo_produto, valor, promo, imagem, peso, descricao, campos) {
+    return Object.assign({
+        nome, categoria, tipo_produto, valor, valor_promocional: promo || null, estoque: 8, imagem, peso, descricao,
+        artista: '', genero: '', destaque: 0, avaliacao: 0
+    }, campos);
+}
 
-const produtosCatalogoV2 = [
-    // ----- Roupas -----
-    roupa('Camiseta Feminina Pink Floyd The Wall', 'Pink Floyd', 'Rock Progressivo', 'Feminino', 'Camiseta', 'P', 'Preto', 'Baby look', 99.9, null, 'tee-pinkfloyd.svg', { avaliacao: 5 }),
-    roupa('Camiseta Masculina Metallica Master of Puppets', 'Metallica', 'Heavy Metal', 'Masculino', 'Camiseta', 'G', 'Preto', 'Tradicional', 109.9, 89.9, 'tee-metallica.svg', { avaliacao: 5 }),
-    roupa('Camiseta Oversized Ramones', 'Ramones', 'Punk Rock', 'Unissex', 'Camiseta', 'M', 'Branco', 'Oversized', 119.9, null, 'tee-ramones.svg'),
-    roupa('Jaqueta Jeans Patches Rock', '', '', 'Unissex', 'Jaqueta', 'M', 'Azul jeans', 'Tradicional', 289.9, 249.9, 'jaqueta-jeans.svg', { material: 'Jeans', peso: 900, destaque: 1, avaliacao: 5 }),
-    roupa('Moletom Amplificada com Capuz', '', '', 'Unissex', 'Moletom', 'GG', 'Cinza mescla', 'Moletom', 189.9, 159.9, 'moletom-amplificada.svg', { material: 'Algodão e poliéster', peso: 750 }),
-    roupa('Boné Distorção Aba Curva', '', '', 'Unissex', 'Acessório', 'M', 'Preto e vermelho', 'Tradicional', 59.9, null, 'bone-distorcao.svg', { material: 'Sarja', peso: 120, avaliacao: 4 }),
+// disco(nome, artista, gênero, formato, edição, gravadora, ano do álbum, preço, preço promocional, foto)
+function disco(nome, artista, genero, formato, edicao, gravadora, ano, valor, promo, imagem, destaque) {
+    return {
+        nome, categoria: 'Discos / Vinis', tipo_produto: 'disco', valor, valor_promocional: promo || null, estoque: 10, imagem,
+        descricao: nome + '. ' + edicao + '.',
+        artista, genero, ano_lancamento: ano, gravadora, peso: formato === 'CD' ? 120 : 350, destaque: destaque ? 1 : 0, avaliacao: 0,
+        formato, velocidade: formato === 'CD' ? null : '33 RPM', edicao
+    };
+}
 
-    // ----- Instrumentos -----
-    instr('Guitarra Stray Cat SG', 'Guitarras', 'guitarra', 1899, null, 'guitarra-straycat.svg', 3700,
-        { marca: 'Sample', modelo: 'Stray Cat SG', numero_cordas: 6, captadores: 'HH', ponte: 'Fixa', material_corpo: 'Mogno' }, { destaque: 1 }),
-    instr('Guitarra Strato Garage', 'Guitarras', 'guitarra', 2299, 2069, 'guitarra-strato.svg', 3500,
-        { marca: 'Sample', modelo: 'Strato Garage', numero_cordas: 6, captadores: 'HSS', ponte: 'Tremolo', material_corpo: 'Alder', material_escala: 'Maple' }),
-    instr('Baixo Thunder 4 Cordas', 'Baixos', 'baixo', 1599, null, 'baixo-thunder.svg', 4100,
-        { marca: 'Sample', modelo: 'Thunder 4', numero_cordas: 4, captadores: 'PJ', material_corpo: 'Basswood', material_escala: 'Maple' }),
-    instr('Violão Folk Cinzas Aço', 'Violões', 'violao', 899, 749, 'violao-folk.svg', 2300,
-        { marca: 'Sample', modelo: 'Folk Cinzas', numero_cordas: 6, tipo_corda: 'Aço', material_tampo: 'Spruce' }),
-    instr('Teclado Synth 61 Teclas', 'Outros instrumentos', 'instrumento', 1299, null, 'teclado-synth.svg', 4800,
-        { tipo_instrumento: 'Teclado', marca: 'Sample', modelo: 'Synth 61' }),
-    instr('Pedal FuzzTone', 'Outros instrumentos', 'instrumento', 349.9, 262.43, 'pedal-fuzztone.svg', 420,
-        { tipo_instrumento: 'Pedal / efeito', marca: 'Sample', modelo: 'FuzzTone' }, { destaque: 1 }),
-    instr('Amplificador Combo 30W', 'Outros instrumentos', 'instrumento', 1190, null, 'amp-combo.svg', 9800,
-        { tipo_instrumento: 'Amplificador', marca: 'Sample', modelo: 'Combo 30' }),
-    instr('Baquetas Thunder 5A', 'Outros instrumentos', 'instrumento', 49.9, null, 'baquetas-thunder.svg', 150,
-        { tipo_instrumento: 'Acessório', marca: 'Sample', modelo: 'Thunder 5A' }, { estoque: 60 }),
+const catalogoReal = [
+    // ----- Roupas (14) -----
+    roupa('Camiseta Led Zeppelin Highway to Heaven Preta', 'Led Zeppelin', 'Hard Rock', 'Camiseta', 'Preto', 59.9, null, 'camiseta-led-zeppelin-highway-heaven.jpg', true),
+    roupa('Camiseta Pink Floyd Banda de Rock Unissex', 'Pink Floyd', 'Rock Progressivo', 'Camiseta', 'Preto', 59.9, 58.7, 'camiseta-pink-floyd-mr254.jpg'),
+    roupa('Camiseta Pink Floyd The Final Cut Oficial Licenciada', 'Pink Floyd', 'Rock Progressivo', 'Camiseta', 'Preto', 79.9, null, 'camiseta-pink-floyd-final-cut.jpg'),
+    roupa('Camiseta Ramones Banda Unissex', 'Ramones', 'Punk Rock', 'Camiseta', 'Preto', 59.9, null, 'camiseta-ramones.jpg'),
+    roupa('Camiseta Alice in Chains Banda de Rock Unissex', 'Alice in Chains', 'Grunge', 'Camiseta', 'Preto', 69.9, null, 'camiseta-alice-in-chains.jpg'),
+    roupa('Camiseta Metallica One Preta Oficial Stamp', 'Metallica', 'Heavy Metal', 'Camiseta', 'Preto', 129.96, null, 'camiseta-metallica-one-stamp.jpg'),
+    roupa('Camiseta Iron Maiden Of0027 Consulado do Rock Oficial', 'Iron Maiden', 'Heavy Metal', 'Camiseta', 'Preto', 69.9, 65.01, 'camiseta-iron-maiden-of0027.jpg'),
+    roupa('Camiseta Megadeth Of0083 Consulado do Rock Oficial', 'Megadeth', 'Thrash Metal', 'Camiseta', 'Preto', 73.46, null, 'camiseta-megadeth-of0083.jpg'),
+    roupa('Camiseta Kiss Of0120 Consulado do Rock Oficial', 'Kiss', 'Hard Rock', 'Camiseta', 'Preto', 73.46, null, 'camiseta-kiss-of0120.jpg'),
+    roupa('Camiseta Slayer Of0116 Consulado do Rock Oficial', 'Slayer', 'Thrash Metal', 'Camiseta', 'Preto', 73.46, null, 'camiseta-slayer-of0116.jpg'),
+    roupa('Camiseta Ratos de Porão Of0044 Consulado do Rock', 'Ratos de Porão', 'Hardcore Punk', 'Camiseta', 'Preto', 69.9, 65.01, 'camiseta-ratos-de-porao-of0044.jpg'),
+    roupa('Camiseta Masculina Foo Fighters Banda Rock', 'Foo Fighters', 'Rock Alternativo', 'Camiseta', 'Preto', 44.9, null, 'camiseta-foo-fighters.jpg'),
+    roupa('Camiseta Regata Led Zeppelin', 'Led Zeppelin', 'Hard Rock', 'Regata', 'Preto', 59.9, null, 'regata-led-zeppelin.jpg'),
+    roupa('Blusa Canguru com Capuz Led Zeppelin Unissex', 'Led Zeppelin', 'Hard Rock', 'Moletom', 'Preto', 150, 124.9, 'moletom-led-zeppelin-capuz.jpg'),
 
-    // ----- Discos -----
-    disco('Vinil Noites de Garagem', 'Rock Nacional', 129.9, null, 'disco-garagem.svg', 'Vinil LP', '33 RPM', 'Edição limitada', 2024, { destaque: 1 }),
-    disco('Vinil Fumaça Elétrica Ao Vivo', 'Hard Rock', 149.9, 119.9, 'disco-fumaca.svg', 'Vinil LP', '33 RPM', 'Gravação ao vivo', 2023),
-    disco('CD Cinzas do Asfalto', 'Rock Alternativo', 39.9, null, 'cd-cinzas.svg', 'CD', '33 RPM', 'Edição padrão', 2022),
-    disco('CD Os Marginais Best Of', 'Punk Rock', 44.9, null, 'cd-marginais.svg', 'CD', '33 RPM', 'Coletânea', 2021),
-    disco('Box Set Vaidade Suja 1976', 'Rock Clássico', 389.9, null, 'box-vaidade.svg', 'Box Set', '33 RPM', 'Edição de colecionador', 2026, { destaque: 1, peso: 1200 }),
-    disco('Vinil Máquina de Ferrugem', 'Heavy Metal', 119.9, 99.9, 'disco-ferrugem.svg', 'Vinil LP', '33 RPM', 'Edição remasterizada', 2020)
+    // ----- Instrumentos (15) -----
+    instrumento('Guitarra Elétrica Tagima TG-500 Stratocaster Preta Escala Escura', 'Guitarras', 'guitarra', 1179.9, null, 'guitarra-tagima-tg-500.jpg', 3600,
+        'Guitarra Tagima TG-500 no formato Stratocaster, com captadores single coil na configuração SSS.',
+        { marca: 'Tagima', modelo: 'TG-500', numero_cordas: 6, captadores: 'SSS' }),
+    instrumento('Guitarra Elétrica Tagima TW Series TG-510 Stratocaster Tília Preta', 'Guitarras', 'guitarra', 989, 939.55, 'guitarra-tagima-tg-510.jpg', 3600,
+        'Guitarra Tagima da linha TW Series, modelo TG-510, Stratocaster com alavanca e corpo em tília.',
+        { marca: 'Tagima', modelo: 'TG-510', numero_cordas: 6, material_corpo: 'Tília' }),
+    instrumento('Guitarra Elétrica Tagima Série Memphis MG-30 Stratocaster', 'Guitarras', 'guitarra', 834.5, null, 'guitarra-tagima-memphis-mg-30.jpg', 3500,
+        'Guitarra Tagima da Série Memphis, modelo MG-30, no formato Stratocaster. Boa opção para quem está começando.',
+        { marca: 'Tagima', modelo: 'Memphis MG-30', numero_cordas: 6 }),
+    instrumento('Guitarra Elétrica Fender Squier Stratocaster Surf Green', 'Guitarras', 'guitarra', 1499.78, null, 'guitarra-squier-stratocaster-surf-green.jpg', 3600,
+        'Guitarra Stratocaster da Squier by Fender na cor Surf Green.',
+        { marca: 'Squier by Fender', modelo: 'Stratocaster', numero_cordas: 6 }),
+    instrumento('Guitarra Strato Strinberg STS-100 Preto Fosco', 'Guitarras', 'guitarra', 1021, null, 'guitarra-strinberg-sts-100.jpg', 3600,
+        'Guitarra Strinberg STS-100 no formato Stratocaster, acabamento preto fosco.',
+        { marca: 'Strinberg', modelo: 'STS-100', numero_cordas: 6 }),
+    instrumento('Contrabaixo Strinberg JBS-50 SB Jazz Bass Sunburst 4 Cordas Passivo', 'Baixos', 'baixo', 1249.25, null, 'baixo-strinberg-jbs-50.jpg', 4200,
+        'Baixo Strinberg JBS-50 no estilo Jazz Bass, 4 cordas, captação passiva, acabamento sunburst.',
+        { marca: 'Strinberg', modelo: 'JBS-50', numero_cordas: 4 }),
+    instrumento('Contrabaixo Tagima TBA-73 BK 4 Cordas Passivo Preto Tortoise', 'Baixos', 'baixo', 1804.91, null, 'baixo-tagima-tba-73.jpg', 4200,
+        'Contrabaixo Tagima TBA-73 de 4 cordas, passivo, na cor preta com escudo tortoise.',
+        { marca: 'Tagima', modelo: 'TBA-73', numero_cordas: 4 }),
+    instrumento('Violão Folk Yamaha F310P TBS Tobacco Brown Sunburst Aço', 'Violões', 'violao', 1799, null, 'violao-yamaha-f310p.jpg', 2000,
+        'Violão folk de cordas de aço Yamaha F310P, indicado para iniciantes e para quem já toca.',
+        { marca: 'Yamaha', modelo: 'F310P', numero_cordas: 6, tipo_corda: 'Aço', material_tampo: 'Spruce' }),
+    instrumento('Violão Yamaha C40MII Clássico Nylon Natural', 'Violões', 'violao', 994.09, null, 'violao-yamaha-c40mii.jpg', 2000,
+        'Violão clássico de cordas de nylon Yamaha C40 II, na cor natural.',
+        { marca: 'Yamaha', modelo: 'C40 II', numero_cordas: 6, tipo_corda: 'Nylon' }),
+    instrumento('Violão Acústico Giannini Nylon Performance Plus N-17 Natural', 'Violões', 'violao', 574.9, 517.41, 'violao-giannini-n-17.jpg', 2000,
+        'Violão acústico de nylon Giannini, linha Performance Plus, modelo N-17.',
+        { marca: 'Giannini', modelo: 'N-17', numero_cordas: 6, tipo_corda: 'Nylon' }),
+    instrumento('Violão Acústico Aço Giannini S-14 Start Estudo', 'Violões', 'violao', 513.9, 462.51, 'violao-giannini-s-14.jpg', 2000,
+        'Violão acústico de cordas de aço Giannini, linha Start, modelo S-14, para estudo.',
+        { marca: 'Giannini', modelo: 'S-14 Start', numero_cordas: 6, tipo_corda: 'Aço' }),
+    instrumento('Violão Tagima Memphis AD-60 Nylon Eletroacústico Preto', 'Violões', 'violao', 699, null, 'violao-tagima-memphis-ad-60.jpg', 2200,
+        'Violão eletroacústico de nylon Tagima Memphis AD-60, cor preta.',
+        { marca: 'Tagima', modelo: 'Memphis AD-60', numero_cordas: 6, tipo_corda: 'Nylon' }),
+    instrumento('Teclado Musical Casio Casiotone CT-S300 Preto 61 Teclas', 'Outros instrumentos', 'instrumento', 1249.99, null, 'teclado-casio-ct-s300.jpg', 4000,
+        'Teclado Casiotone CT-S300 com 61 teclas e teclas sensíveis ao toque. Funciona com o aplicativo gratuito Chordana Play.',
+        { tipo_instrumento: 'Teclado', marca: 'Casio', modelo: 'CT-S300' }),
+    instrumento('Teclado Yamaha PSR-E383 61 Teclas', 'Outros instrumentos', 'instrumento', 1647.03, null, 'teclado-yamaha-psr-e383.jpg', 4500,
+        'Teclado Yamaha PSR-E383 com 61 teclas.',
+        { tipo_instrumento: 'Teclado', marca: 'Yamaha', modelo: 'PSR-E383' }),
+    instrumento('Bateria Completa Acústica Profissional MXT M-B120P Preta', 'Baterias', 'bateria', 3037.61, null, 'bateria-mxt-m-b120p.jpg', 28000,
+        'Bateria acústica completa MXT M-B120P na cor preta.',
+        { marca: 'MXT', modelo: 'M-B120P' }),
+
+    // ----- Discos (16) -----
+    disco('Vinil Pink Floyd The Dark Side of the Moon', 'Pink Floyd', 'Rock Progressivo', 'Vinil LP', 'Edição em vinil Legacy Recordings', 'Legacy Recordings', 1973, 390.08, null, 'vinil-pink-floyd-dark-side.jpg', true),
+    disco('Vinil Led Zeppelin Physical Graffiti (Remasterização 2015)', 'Led Zeppelin', 'Hard Rock', 'Vinil LP', 'Remasterização de 2015', 'Atlantic', 1975, 643.26, null, 'vinil-led-zeppelin-physical-graffiti.jpg'),
+    disco('Vinil Led Zeppelin III Edição Deluxe (Remasterização 2014)', 'Led Zeppelin', 'Hard Rock', 'Vinil LP', 'Edição Deluxe, remasterização de 2014', 'Atlantic', 1970, 549.04, null, 'vinil-led-zeppelin-iii.jpg'),
+    disco('Vinil Black Sabbath Master of Reality', 'Black Sabbath', 'Heavy Metal', 'Vinil LP', 'Edição em vinil', null, 1971, 305.08, null, 'vinil-black-sabbath-master-of-reality.jpg'),
+    disco('Vinil The Beatles Magical Mystery Tour', 'The Beatles', 'Rock Clássico', 'Vinil LP', 'Edição em vinil', null, 1967, 247.22, null, 'vinil-beatles-magical-mystery-tour.jpg'),
+    disco('Vinil The Beatles The White Album 2 LP', 'The Beatles', 'Rock Clássico', 'Vinil LP', 'Álbum duplo (2 LPs)', null, 1968, 457.62, null, 'vinil-beatles-white-album.jpg'),
+    disco('Vinil The Beatles Abbey Road Edição de Aniversário', 'The Beatles', 'Rock Clássico', 'Vinil LP', 'Edição de aniversário', null, 1969, 294.56, null, 'vinil-beatles-abbey-road.jpg', true),
+    disco('Vinil Queen A Night at the Opera Edição Limitada 180g', 'Queen', 'Rock Clássico', 'Vinil LP', 'Edição limitada importada, 180 gramas, capa gatefold', 'Hollywood Records', 1975, 385.25, null, 'vinil-queen-a-night-at-the-opera.jpg'),
+    disco('Vinil Nirvana Secrets RSD 2022 Limitado Verde', 'Nirvana', 'Grunge', 'Vinil LP', 'Edição limitada Record Store Day 2022, vinil verde', null, 2022, 194.9, null, 'vinil-nirvana-secrets-rsd-2022.jpg'),
+    disco('CD Pink Floyd The Dark Side of the Moon', 'Pink Floyd', 'Rock Progressivo', 'CD', 'Edição em CD', null, 1973, 49.9, 44.9, 'cd-pink-floyd-dark-side.jpg'),
+    disco('CD Nirvana Nevermind', 'Nirvana', 'Grunge', 'CD', 'Edição em CD Universal', 'Universal', 1991, 45.99, null, 'cd-nirvana-nevermind.jpg'),
+    disco('CD My Chemical Romance The Black Parade', 'My Chemical Romance', 'Rock Alternativo', 'CD', 'Edição em CD Warner Music', 'Warner Music', 2006, 62.99, null, 'cd-mcr-the-black-parade.jpg'),
+    disco('CD Iron Maiden Fear of the Dark', 'Iron Maiden', 'Heavy Metal', 'CD', 'Edição em CD', null, 1992, 39.9, 37.91, 'cd-iron-maiden-fear-of-the-dark.jpg'),
+    disco('CD Iron Maiden Piece of Mind', 'Iron Maiden', 'Heavy Metal', 'CD', 'Edição em CD Warner Music', 'Warner Music', 1983, 45.99, null, 'cd-iron-maiden-piece-of-mind.jpg'),
+    disco('CD Iron Maiden Seventh Son of a Seventh Son', 'Iron Maiden', 'Heavy Metal', 'CD', 'Edição em CD', null, 1988, 39.9, 37.91, 'cd-iron-maiden-seventh-son.jpg'),
+    disco('CD Duplo Helloween Master of the Rings Expanded Edition', 'Helloween', 'Power Metal', 'CD', 'Edição expandida, CD duplo', null, 1994, 205, 194.75, 'cd-helloween-master-of-the-rings.jpg'),
+    disco('CD AC/DC Back in Black', 'AC/DC', 'Hard Rock', 'CD', 'Edição em CD', null, 1980, 39.9, 37.91, 'cd-acdc-back-in-black.jpg', true),
+    disco('CD Metallica The Black Album (Remastered) Universal Music', 'Metallica', 'Heavy Metal', 'CD', 'Edição remasterizada em CD', 'Universal Music', 1991, 49.99, 44.99, 'cd-metallica-black-album.jpg'),
+    disco('CD Queen Greatest Hits I', 'Queen', 'Rock Clássico', 'CD', 'Coletânea em CD', null, 1981, 39.9, 37.91, 'cd-queen-greatest-hits.jpg'),
+    disco('CD Legião Urbana Legião Urbana Digipack', 'Legião Urbana', 'Rock Nacional', 'CD', 'Edição digipack em CD', null, 1985, 78.9, 74.96, 'cd-legiao-urbana.jpg')
 ];
 
-module.exports = { categoriasIniciais, produtosDeTeste, produtosCatalogoV2 };
+module.exports = { categoriasIniciais, produtosDeTeste, catalogoReal };

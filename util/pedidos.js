@@ -16,6 +16,25 @@ const PODE_CANCELAR = ['Aguardando pagamento', 'Pago', 'Em separação'];
 const ETAPAS = ['Aguardando pagamento', 'Pago', 'Em separação', 'Enviado', 'Entregue'];
 const FORMAS_DE_PAGAMENTO = { pix: 'PIX', cartao: 'Cartão de crédito', boleto: 'Boleto' };
 
+// Regras do valor do pedido (a página de checkout usa os mesmos números)
+const CUPOM = { codigo: 'SAMPLE10', percentual: 10 };   // cupom de 10% sobre o subtotal
+const DESCONTO_PIX = 5;                                 // 5% sobre o subtotal para quem paga no Pix
+const FRETE_EXPRESSO = 39.9;
+const PARCELAS_MAXIMAS = 6;                             // até 6x sem juros no cartão
+
+// total = subtotal - descontos + frete. Os descontos do cupom e do Pix somam.
+function calcularValores(subtotal, fretePadrao, entrega, forma, cupom) {
+    const cupomValido = String(cupom || '').trim().toUpperCase() === CUPOM.codigo;
+    let desconto = 0;
+    if (cupomValido) desconto += subtotal * CUPOM.percentual / 100;
+    if (forma === 'pix') desconto += subtotal * DESCONTO_PIX / 100;
+    desconto = Math.round(desconto * 100) / 100;
+
+    const frete = entrega === 'expressa' ? FRETE_EXPRESSO : fretePadrao;
+    const total = Math.round((subtotal - desconto + frete) * 100) / 100;
+    return { desconto, frete, total, cupomValido };
+}
+
 // Código de rastreio no formato dos Correios (ex.: SM123456789BR), gerado na confirmação do pedido (RN27)
 function gerarCodigoRastreio() {
     return 'SM' + String(crypto.randomInt(0, 1000000000)).padStart(9, '0') + 'BR';
@@ -75,11 +94,11 @@ function cancelarPedido(db, pedido, callback) {
 // Cria o pedido: baixa o estoque (RN25), grava o pedido, os itens e o primeiro registro do histórico.
 // itens = [{ produto: <linha de produtos>, quantidade }]
 function criarPedido(db, dados, callback) {
-    const { usuarioId, endereco, itens, forma, cpf, frete } = dados;
+    const { usuarioId, endereco, itens, forma, cpf, frete, desconto, entrega, cupom, parcelas } = dados;
 
     const subtotal = Math.round(itens.reduce((t, i) => t + (i.produto.valor_promocional || i.produto.valor) * i.quantidade, 0) * 100) / 100;
     const pesoTotal = itens.reduce((t, i) => t + (i.produto.peso || 0) * i.quantidade, 0);
-    const total = Math.round((subtotal + frete) * 100) / 100;
+    const total = Math.round((subtotal - desconto + frete) * 100) / 100;
     const codigo = gerarCodigoRastreio();
     const baixados = [];   // para desfazer se algum item acabar no meio do caminho
 
@@ -100,11 +119,13 @@ function criarPedido(db, dados, callback) {
         db.run(
             `INSERT INTO pedidos
                 (usuario_id, status, forma_pagamento, cpf, subtotal, frete, total, peso_total, codigo_rastreio,
-                 dest_nome, dest_telefone, dest_cep, dest_estado, dest_cidade, dest_bairro, dest_rua, dest_numero, dest_complemento, criado_em)
-             VALUES (?, 'Aguardando pagamento', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
-            [usuarioId, forma, cpf, subtotal, frete, total, pesoTotal, codigo,
+                 dest_nome, dest_telefone, dest_cep, dest_estado, dest_cidade, dest_bairro, dest_rua, dest_numero, dest_complemento,
+                 desconto, entrega, cupom, parcelas, criado_em)
+             VALUES (?, 'Aguardando pagamento', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
+            [usuarioId, forma, cpf || '', subtotal, frete, total, pesoTotal, codigo,
              endereco.destinatario, endereco.telefone, endereco.cep, endereco.estado, endereco.cidade,
-             endereco.bairro, endereco.rua, endereco.numero, endereco.complemento],
+             endereco.bairro, endereco.rua, endereco.numero, endereco.complemento,
+             desconto, entrega, cupom || null, parcelas || 1],
             function (erroPedido) {
                 if (erroPedido) return devolverEstoque(db, baixados, () => callback(erroPedido));
                 const pedidoId = this.lastID;
@@ -125,6 +146,6 @@ function criarPedido(db, dados, callback) {
 }
 
 module.exports = {
-    PROXIMO_STATUS, PODE_CANCELAR, ETAPAS, FORMAS_DE_PAGAMENTO,
+    PROXIMO_STATUS, PODE_CANCELAR, ETAPAS, FORMAS_DE_PAGAMENTO, CUPOM, DESCONTO_PIX, FRETE_EXPRESSO, PARCELAS_MAXIMAS, calcularValores,
     gerarCodigoRastreio, registrarHistorico, mudarStatus, cancelarPedido, criarPedido
 };

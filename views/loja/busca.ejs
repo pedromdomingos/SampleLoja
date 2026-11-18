@@ -14,13 +14,12 @@
 <%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Busca' }], titulo: 'RESULTADOS', texto: 'Você buscou por “' + termo + '”.', pills: [], etapa: 0, etapaFeita: false }) %>
 
 <main class="loja-pagina">
-    <form method="GET" action="/busca" id="formFiltros" data-lista>
+    <form method="GET" action="/busca" id="formFiltros">
         <input type="hidden" name="q" value="<%= termo %>">
         <div class="loja-toolbar">
-            <p class="resultado-info" id="resultadoInfo" aria-live="polite"><%= total %> resultado<%= total === 1 ? '' : 's' %> para “<%= termo %>”</p>
-            <%- include('../partials/loja-controles', { ORDENS: ORDENS, ordem: ordem, qtdFiltros: qtdFiltros, secoes: secoes, selecionados: marcados, mostrarPromocao: true }) %>
+            <p class="resultado-info"><%= total %> resultado<%= total === 1 ? '' : 's' %> para “<%= termo %>”</p>
+            <%- include('../partials/loja-controles', { ORDENS: ORDENS, ordem: ordem, qtdFiltros: qtdFiltros, secoes: secoes, selecionados: marcados, mostrarPromocao: true, limparUrl: '/busca?q=' + encodeURIComponent(termo) }) %>
         </div>
-        <div class="chips-ativos" id="chipsAtivos"></div>
 
         <div class="loja-corpo">
             <div class="loja-resultados" id="resultados">

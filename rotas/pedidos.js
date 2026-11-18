@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../banco/database');
 const { precisaPerfil } = require('../util/auth');
-const { ETAPAS, PODE_CANCELAR, FORMAS_DE_PAGAMENTO, mudarStatus, cancelarPedido } = require('../util/pedidos');
+const { ETAPAS, PODE_CANCELAR, PROXIMO_STATUS, FORMAS_DE_PAGAMENTO, mudarStatus, cancelarPedido } = require('../util/pedidos');
 
 router.use(precisaPerfil('cliente'));
 
@@ -58,6 +58,18 @@ router.post('/:id/cancelar', (req, res, next) => {
             req.session.mensagem = erroCancelar
                 ? { tipo: 'warning', texto: 'Este pedido não pode mais ser cancelado.' }
                 : { tipo: 'success', texto: 'Pedido cancelado.' };
+            res.redirect('/pedidos/' + pedido.id);
+        });
+    });
+});
+
+// PROTÓTIPO: avança o status do pedido para demonstrar o rastreamento (Pago -> Em separação -> Enviado -> Entregue)
+router.post('/:id/avancar', (req, res) => {
+    db.get('SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?', [req.params.id, req.session.usuario.id], (erro, pedido) => {
+        if (erro || !pedido) return res.redirect('/pedidos');
+        const proximo = PROXIMO_STATUS[pedido.status];
+        if (!proximo) return res.redirect('/pedidos/' + pedido.id);
+        mudarStatus(db, pedido.id, proximo, 'Etapa avançada (simulação do protótipo).', () => {
             res.redirect('/pedidos/' + pedido.id);
         });
     });

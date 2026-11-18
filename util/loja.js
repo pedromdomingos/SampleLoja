@@ -154,49 +154,33 @@ function listarPagina(db, pagina, consulta, callback) {
 }
 
 // ---------- BUSCA ----------
-// Ignora maiúsculas e acentos ("violao" acha "Violão") e aceita plural ("camisetas" acha "Camiseta").
-const normalizar = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-function textoDeBusca(p) {
-    const pagina = paginaDoTipo(p.tipo_produto);
-    const grupo = pagina ? `${PAGINAS[pagina].rotulo} ${pagina.replace(/s$/, '')}` : '';
-    return normalizar([p.nome, p.artista, p.genero, p.categoria, p.marca, p.modelo, p.cor, p.formato, p.tipo_peca, p.tipo_instrumento, p.publico, grupo].join(' '));
-}
-
-function termosDaBusca(termo) {
-    return normalizar(termo).split(/\s+/).filter(Boolean).map(t => ({ t, s: t.length > 3 ? t.replace(/s$/, '') : t }));
-}
-
-// Busca em nome, artista/banda, gênero, categoria, marca, cor... Todas as palavras digitadas precisam aparecer.
+// Procura o texto no nome, artista, gênero, categoria, marca e cor. Aceita os mesmos filtros das categorias.
 function buscar(db, termo, consulta, callback) {
-    const o = ordemValida(consulta.ordem);
-    const termos = termosDaBusca(termo);
-    db.all(`SELECT ${COLUNAS} FROM produtos ORDER BY ${ORDENS[o].sql}`, [], (erro, todos) => {
-        if (erro) return callback(erro);
-        let achados = todos.filter(p => { const h = textoDeBusca(p); return termos.every(x => h.includes(x.t) || h.includes(x.s)); });
+    const ordem = ordemValida(consulta.ordem);
+    const condicoes = [];
+    const params = [];
 
-        // filtros da busca: categoria (roupas/instrumentos/discos), faixa de preço e promoções
-        const paginas = lista(consulta.pagina).filter(k => PAGINAS[k]);
-        const faixas = lista(consulta.preco).map(lerFaixa).filter(Boolean);
-        const contagem = {};
-        achados.forEach(p => { const k = paginaDoTipo(p.tipo_produto); if (k) contagem[k] = (contagem[k] || 0) + 1; });
-
-        if (paginas.length) achados = achados.filter(p => paginas.includes(paginaDoTipo(p.tipo_produto)));
-        if (faixas.length) achados = achados.filter(p => faixas.some(f => p.preco_final >= f[0] && (f[1] === null || p.preco_final <= f[1])));
-        if (consulta.promocao === '1') achados = achados.filter(p => p.valor_promocional);
-
-        callback(null, achados, o, { paginas, faixas: faixas.map(chaveFaixa), promocao: consulta.promocao === '1' ? ['1'] : [], contagem });
+    // cada palavra digitada precisa aparecer em algum desses campos
+    termo.split(' ').filter(palavra => palavra !== '').forEach(palavra => {
+        condicoes.push('(nome LIKE ? OR artista LIKE ? OR genero LIKE ? OR categoria LIKE ? OR marca LIKE ? OR cor LIKE ?)');
+        for (let i = 0; i < 6; i++) params.push('%' + palavra + '%');
     });
-}
 
-// Sugestões enquanto o cliente digita (até 6 produtos)
-function sugestoes(db, termo, callback) {
-    buscar(db, termo, {}, (erro, produtos) => {
-        if (erro) return callback(erro);
-        callback(null, produtos.slice(0, 6).map(p => ({
-            id: p.id, nome: p.nome, imagem: p.imagem, preco: p.preco_final,
-            categoria: (PAGINAS[paginaDoTipo(p.tipo_produto)] || {}).rotulo || p.categoria
-        })));
+    // filtro de categoria: roupas, instrumentos ou discos
+    const paginas = lista(consulta.pagina).filter(k => PAGINAS[k]);
+    if (paginas.length) {
+        const tipos = [];
+        paginas.forEach(k => tipos.push(...PAGINAS[k].tipos));
+        condicoes.push(`tipo_produto IN (${tipos.map(() => '?').join(', ')})`);
+        params.push(...tipos);
+    }
+
+    const faixas = lista(consulta.preco).filter(lerFaixa);
+    if (faixas.length) condicaoPreco(faixas, condicoes, params);
+    if (consulta.promocao === '1') condicoes.push('valor_promocional IS NOT NULL');
+
+    db.all(`SELECT ${COLUNAS} FROM produtos WHERE ${condicoes.join(' AND ')} ORDER BY ${ORDENS[ordem].sql}`, params, (erro, produtos) => {
+        callback(erro, produtos, ordem, { paginas, faixas, promocao: consulta.promocao === '1' ? ['1'] : [] });
     });
 }
 
@@ -227,4 +211,4 @@ function vitrineDaHome(db, callback) {
     });
 }
 
-module.exports = { PAGINAS, ORDENS, TAMANHOS, listarPagina, buscar, sugestoes, vitrineDaHome, ordemValida, paginaDoTipo, rotuloFaixa, chaveFaixa };
+module.exports = { PAGINAS, ORDENS, listarPagina, buscar, vitrineDaHome, paginaDoTipo };

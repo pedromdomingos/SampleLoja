@@ -1,48 +1,89 @@
 <%# PÁGINA ÚNICA DE PRODUTO: serve para camisa, disco e instrumento.
-    Variáveis recebidas da rota: produto (o produto do banco), especificacoes (vetor de detalhes) e relacionados (vetor de produtos). %>
+    A rota manda 3 variáveis: produto (o produto do banco), especificacoes (vetor de detalhes) e relacionados (vetor de produtos).
+    O que aparece na tela muda conforme o produto; a página é sempre a mesma. %>
 <%- include('../admin/partials/header') %>
 <%- include('../partials/loja-topo') %>
 <%
     const podeComprar = !usuario || usuario.perfil === 'cliente';
-    const _pagina = paginaDoTipo(produto.tipo_produto);
-    const _caminho = [];
-    if (_pagina) _caminho.push({ t: PAGINAS[_pagina].rotulo, u: '/loja/' + _pagina });
-    _caminho.push({ t: produto.nome });
+    const preco = precoFinal(produto);
+
+    // caminho percorrido: Início / Roupas / Nome do produto
+    const pagina = paginaDoTipo(produto.tipo_produto);
+    const caminho = [];
+    if (pagina) caminho.push({ t: PAGINAS[pagina].rotulo, u: '/loja/' + pagina });
+    caminho.push({ t: produto.nome });
+
+    // vetor com os fundos das miniaturas
+    const fundos = ['#ffffff', '#efe7d8', 'linear-gradient(135deg, #c6301e, #7e1b12)', 'linear-gradient(135deg, #4a3410, #1d150a)'];
+    const tamanhosDisponiveis = ['P', 'M', 'G', 'GG'];
 %>
 
 <main class="loja-pagina">
-    <div class="migalhas-claro"><%- include('../partials/migalhas', { caminho: _caminho }) %></div>
-
     <section class="produto-detalhe">
-        <div class="produto-foto">
-            <% if (produto.imagem) { %><img src="/uploads/<%= produto.imagem %>" alt="<%= produto.nome %>"><% } %>
-            <% if (desconto(produto) > 0) { %><em class="off-badge"><%= desconto(produto) %>% OFF</em><% } %>
+
+        <div class="produto-galeria">
+            <div class="produto-foto">
+                <% if (produto.imagem) { %><img src="/uploads/<%= produto.imagem %>" alt="<%= produto.nome %>" onerror="this.onerror=null; this.src='/img/sem-foto.svg'"><% } %>
+            </div>
+            <div class="miniaturas">
+                <% fundos.forEach((fundo, i) => { %>
+                    <button type="button" class="miniatura <%= i === 0 ? 'ativa' : '' %>" data-fundo="<%= fundo %>" style="background: <%= fundo %>" aria-label="Foto <%= i + 1 %>">
+                        <% if (produto.imagem) { %><img src="/uploads/<%= produto.imagem %>" alt="" onerror="this.onerror=null; this.src='/img/sem-foto.svg'"><% } %>
+                    </button>
+                <% }) %>
+            </div>
         </div>
 
         <div class="produto-info">
-            <span class="eyebrow"><%= produto.categoria %></span>
+            <div class="migalhas-claro"><%- include('../partials/migalhas', { caminho: caminho }) %></div>
             <h1><%= produto.nome %></h1>
-            <p class="produto-linha">
-                <% if (produto.artista) { %><%= produto.artista %><% } %>
-                <% if (produto.genero) { %> · <%= produto.genero %><% } %>
-                <% if (produto.ano_lancamento) { %> · <%= produto.ano_lancamento %><% } %>
-            </p>
-            <% if (produto.avaliacao > 0) { %>
-                <div class="stars stars-grande"><% for (let i = 1; i <= 5; i++) { %><i class="bi bi-star-fill <%= i <= Math.round(produto.avaliacao) ? '' : 'off' %>"></i><% } %></div>
+            <% if (produto.artista || produto.genero) { %>
+                <p class="produto-linha"><%= [produto.artista, produto.genero, produto.ano_lancamento].filter(Boolean).join(' · ') %></p>
+            <% } %>
+
+            <% if (avaliacoes.length > 0) { %>
+                <div class="stars stars-grande">
+                    <% for (let i = 1; i <= 5; i++) { %><i class="bi bi-star-fill <%= i <= Math.round(media) ? '' : 'off' %>"></i><% } %>
+                    <span><%= media %> · <%= avaliacoes.length %> avaliaç<%= avaliacoes.length === 1 ? 'ão' : 'ões' %></span>
+                </div>
             <% } %>
 
             <div class="produto-preco">
                 <% if (produto.valor_promocional) { %><s><%= brl(produto.valor) %></s><% } %>
-                <strong><%= brl(precoFinal(produto)) %></strong>
+                <strong><%= brl(preco) %></strong>
             </div>
+            <p class="produto-parcelas">ou 6x de <%= brl(preco / 6) %> sem juros · <%= brl(preco * 0.95) %> no Pix (5% off)</p>
+
+            <%# só roupas têm tamanho. Cada botão é um link para o produto daquele tamanho (mesma peça, id diferente);
+                 quando não existe aquele tamanho no banco, o botão fica desativado. %>
+            <% if (produto.tipo_produto === 'roupa') { %>
+                <div class="tamanhos">
+                    <% tamanhosDisponiveis.forEach(t => { %>
+                        <% if (t === produto.tamanho) { %>
+                            <span class="tamanho ativo"><%= t %></span>
+                        <% } else if (tamanhos[t]) { %>
+                            <a class="tamanho" href="/produto/<%= tamanhos[t] %>"><%= t %></a>
+                        <% } else { %>
+                            <span class="tamanho indisponivel"><%= t %></span>
+                        <% } %>
+                    <% }) %>
+                </div>
+            <% } %>
 
             <% if (produto.estoque > 0) { %>
-                <p class="produto-estoque <%= produto.estoque <= 5 ? 'baixo' : '' %>">
-                    <%= produto.estoque <= 5 ? 'Últimas ' + produto.estoque + ' unidades!' : 'Em estoque' %>
-                </p>
+                <p class="produto-estoque <%= produto.estoque <= 5 ? 'baixo' : '' %>"><%= produto.estoque <= 5 ? 'Últimas ' + produto.estoque + ' unidades!' : 'Em estoque' %></p>
             <% } else { %>
                 <p class="produto-estoque indisponivel">Indisponível no momento</p>
             <% } %>
+
+            <div class="frete-calculo">
+                <label for="cepFrete">Calcular frete e prazo</label>
+                <div class="frete-calculo-linha">
+                    <input type="text" id="cepFrete" placeholder="00000-000" inputmode="numeric" maxlength="9">
+                    <button type="button" id="btnCalcularFrete">Calcular</button>
+                </div>
+                <div id="resultadoFrete" class="frete-resultado"></div>
+            </div>
 
             <% if (podeComprar && produto.estoque > 0) { %>
                 <form action="/carrinho/adicionar" method="POST" class="produto-compra">
@@ -62,18 +103,51 @@
                 <p class="muted">Você está vendo a loja como <%= usuario.perfil === 'admin' ? 'administrador' : 'funcionário' %>. Para comprar, entre com uma conta de cliente.</p>
             <% } %>
 
-            <h2 class="produto-subtitulo">Descrição</h2>
-            <p class="produto-descricao"><%= produto.descricao %></p>
+            <div class="abas-produto">
+                <button type="button" class="aba-produto ativa" data-aba="descricao">Descrição</button>
+                <button type="button" class="aba-produto" data-aba="especificacoes">Especificações</button>
+                <button type="button" class="aba-produto" data-aba="avaliacoes">Avaliações</button>
+            </div>
 
-            <% if (especificacoes.length || produto.gravadora || produto.peso) { %>
-                <h2 class="produto-subtitulo">Especificações</h2>
+            <div data-painel-produto="descricao">
+                <p class="produto-descricao"><%= produto.descricao %></p>
+            </div>
+
+            <div data-painel-produto="especificacoes" hidden>
                 <dl class="data-list produto-specs">
-                    <%# forEach: repete uma linha (nome + valor) para cada item do vetor especificacoes %>
-                    <% especificacoes.forEach(e => { %><dt><%= e.rotulo %></dt><dd><%= e.valor %></dd><% }) %>
+                    <%# forEach repete uma linha (nome + valor) para cada item do vetor especificacoes %>
+                    <% especificacoes.forEach(e => { %>
+                        <dt><%= e.rotulo %></dt><dd><%= e.valor %></dd>
+                    <% }) %>
                     <% if (produto.gravadora) { %><dt>Gravadora</dt><dd><%= produto.gravadora %></dd><% } %>
                     <% if (produto.peso) { %><dt>Peso</dt><dd><%= produto.peso %> g</dd><% } %>
                 </dl>
-            <% } %>
+            </div>
+
+            <div data-painel-produto="avaliacoes" hidden>
+                <% if (podeAvaliarProduto) { %>
+                    <form action="/produto/<%= produto.id %>/avaliar" method="POST" class="form-avaliacao">
+                        <p>Você comprou este produto. Deixe sua avaliação:</p>
+                        <div class="estrelas-input">
+                            <% for (let i = 5; i >= 1; i--) { %>
+                                <input type="radio" name="nota" value="<%= i %>" id="nota<%= i %>"><label for="nota<%= i %>"><i class="bi bi-star-fill"></i></label>
+                            <% } %>
+                        </div>
+                        <textarea name="comentario" maxlength="500" placeholder="Conte como foi sua experiência (opcional)"></textarea>
+                        <button type="submit" class="sample-button sample-button-red">Enviar avaliação</button>
+                    </form>
+                <% } %>
+                <% if (!avaliacoes.length) { %>
+                    <p class="muted">Este produto ainda não tem avaliações.</p>
+                <% } %>
+                <% avaliacoes.forEach(a => { %>
+                    <div class="avaliacao-item">
+                        <div class="stars"><% for (let i = 1; i <= 5; i++) { %><i class="bi bi-star-fill <%= i <= a.nota ? '' : 'off' %>"></i><% } %></div>
+                        <strong><%= a.nome %></strong>
+                        <% if (a.comentario) { %><p><%= a.comentario %></p><% } %>
+                    </div>
+                <% }) %>
+            </div>
         </div>
     </section>
 

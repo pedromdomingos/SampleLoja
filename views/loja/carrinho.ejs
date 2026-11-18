@@ -9,8 +9,8 @@
             <p>Seu carrinho está vazio.</p>
             <div class="vazio-acoes">
                 <a href="/loja/roupas" class="sample-button sample-button-red">VER ROUPAS</a>
-                <a href="/loja/instrumentos" class="sample-button sample-button-ghost">VER INSTRUMENTOS</a>
-                <a href="/loja/discos" class="sample-button sample-button-ghost">VER DISCOS</a>
+                <a href="/loja/instrumentos" class="sample-button sample-button-red">VER INSTRUMENTOS</a>
+                <a href="/loja/discos" class="sample-button sample-button-red">VER DISCOS</a>
             </div>
         </div>
     <% } else { %>
@@ -18,11 +18,10 @@
             <section class="carrinho-itens">
                 <% itens.forEach(i => { %>
                     <article class="carrinho-item">
-                        <a href="/produto/<%= i.produto.id %>" class="carrinho-foto"><% if (i.produto.imagem) { %><img src="/uploads/<%= i.produto.imagem %>" alt="<%= i.produto.nome %>"><% } %></a>
+                        <a href="/produto/<%= i.produto.id %>" class="carrinho-foto"><% if (i.produto.imagem) { %><img src="/uploads/<%= i.produto.imagem %>" alt="<%= i.produto.nome %>" onerror="this.onerror=null; this.src='/img/sem-foto.svg'"><% } %></a>
                         <div class="carrinho-info">
                             <a href="/produto/<%= i.produto.id %>" class="carrinho-nome"><%= i.produto.nome %></a>
-                            <span class="muted"><%= i.produto.categoria %><%= i.produto.tamanho ? ' · Tam. ' + i.produto.tamanho : '' %></span>
-                            <span class="carrinho-preco"><% if (i.produto.valor_promocional) { %><s><%= brl(i.produto.valor) %></s> <% } %><%= brl(i.preco) %> cada</span>
+                            <span class="muted"><%= [i.produto.categoria, i.produto.tipo_peca, i.produto.tamanho ? 'Tam. ' + i.produto.tamanho : ''].filter(Boolean).join(' · ') %></span>
                             <div class="carrinho-acoes">
                                 <form action="/carrinho/atualizar" method="POST" class="qtd-step" data-qtd data-auto>
                                     <input type="hidden" name="produto_id" value="<%= i.produto.id %>">
@@ -60,7 +59,7 @@
                 <div class="resumo-total"><span>Total</span><strong><%= brl(subtotal) %></strong></div>
                 <p class="muted resumo-peso">Peso total: <%= (pesoTotal / 1000).toFixed(2).replace('.', ',') %> kg<%= falta > 0 ? ' · o frete entra no checkout' : '' %></p>
                 <% if (!usuario || usuario.perfil === 'cliente') { %>
-                    <a href="/checkout/endereco" class="sample-button sample-button-red resumo-botao">IR PARA O CHECKOUT</a>
+                    <a href="/checkout" class="sample-button sample-button-red resumo-botao">IR PARA O CHECKOUT</a>
                 <% } else { %>
                     <p class="muted">Administrador e funcionário não fazem compras.</p>
                 <% } %>

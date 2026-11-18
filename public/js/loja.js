@@ -1,292 +1,489 @@
-// JavaScript da LOJA (carregado em todas as páginas; cada bloco só age se encontrar seus elementos).
-(function () {
-    'use strict';
-    var $ = function (s, r) { return (r || document).querySelector(s); };
-    var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-    var reduzir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var esc = function (t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-    var brl = function (v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+// JavaScript da loja. Cada bloco só funciona se os elementos existirem na página.
 
-    // ---------- AVISO RÁPIDO (toast) ----------
-    function toast(texto) {
-        var t = document.createElement('div');
-        t.className = 'toast-loja'; t.setAttribute('role', 'status'); t.textContent = texto;
-        document.body.appendChild(t);
-        setTimeout(function () { t.classList.add('sai'); setTimeout(function () { t.remove(); }, 400); }, 2600);
-    }
+function buscar(seletor, dentro) {
+    return (dentro || document).querySelector(seletor);
+}
+function buscarTodos(seletor, dentro) {
+    return Array.from((dentro || document).querySelectorAll(seletor));
+}
 
-    // ---------- CABEÇALHO: sombra ao rolar, menu mobile e menus suspensos ----------
-    var header = $('#lojaHeader');
-    if (header) {
-        var rolou = function () { header.classList.toggle('is-scrolled', window.scrollY > 8); };
-        window.addEventListener('scroll', rolou, { passive: true }); rolou();
-
-        var toggle = $('#navToggle'), links = $('#navLinks');
-        if (toggle) toggle.addEventListener('click', function () {
-            var aberto = header.classList.toggle('menu-aberto');
-            toggle.setAttribute('aria-expanded', aberto ? 'true' : 'false');
-        });
-        $$('#navLinks a').forEach(function (a) { a.addEventListener('click', function () { header.classList.remove('menu-aberto'); }); });
-
-        // "Categorias" e "Conta": abrem ao clicar (e no hover, via CSS no desktop)
-        [['.nav-dd', '.nav-dd-btn'], ['.user-dd', '.user-dd-btn']].forEach(function (par) {
-            var cx = $(par[0]); if (!cx) return;
-            var btn = $(par[1], cx);
-            btn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                var abrir = !cx.classList.contains('aberto');
-                $$('.nav-dd, .user-dd').forEach(function (o) { o.classList.remove('aberto'); var b = o.querySelector('button'); if (b) b.setAttribute('aria-expanded', 'false'); });
-                cx.classList.toggle('aberto', abrir); btn.setAttribute('aria-expanded', abrir ? 'true' : 'false');
-            });
-        });
-        document.addEventListener('click', function () { $$('.nav-dd, .user-dd').forEach(function (o) { o.classList.remove('aberto'); }); });
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { $$('.nav-dd, .user-dd').forEach(function (o) { o.classList.remove('aberto'); }); fecharSugestoes(); } });
-    }
-
-    // ---------- BUSCA: sugestões enquanto digita ----------
-    var campo = $('#campoBusca'), caixa = $('#buscaSugestoes'), formBusca = $('#formBusca');
-    var temporizador, ultima = '', itemAtivo = -1;
-    function fecharSugestoes() { if (caixa) { caixa.hidden = true; caixa.innerHTML = ''; itemAtivo = -1; } }
-    if (campo && caixa) {
-        campo.addEventListener('input', function () {
-            clearTimeout(temporizador);
-            var q = campo.value.trim();
-            if (q.length < 2) return fecharSugestoes();
-            temporizador = setTimeout(function () {
-                ultima = q;
-                fetch('/busca/sugestoes?q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (lista) {
-                    if (q !== ultima) return;
-                    var html = lista.map(function (p) {
-                        return '<a href="/produto/' + p.id + '" role="option" class="sug-item">' +
-                            (p.imagem ? '<img src="/uploads/' + esc(p.imagem) + '" alt="">' : '<span class="sug-sem"></span>') +
-                            '<span class="sug-txt"><strong>' + esc(p.nome) + '</strong><small>' + esc(p.categoria) + '</small></span><b>' + brl(p.preco) + '</b></a>';
-                    }).join('');
-                    html += lista.length
-                        ? '<a href="/busca?q=' + encodeURIComponent(q) + '" class="sug-todos">Ver todos os resultados para “' + esc(q) + '” <i class="bi bi-arrow-right"></i></a>'
-                        : '<div class="sug-vazio">Nada encontrado para “' + esc(q) + '”.</div>';
-                    caixa.innerHTML = html; caixa.hidden = false; itemAtivo = -1;
-                }).catch(fecharSugestoes);
-            }, 180);
-        });
-        campo.addEventListener('keydown', function (e) {
-            var itens = $$('a', caixa);
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                if (!itens.length) return; e.preventDefault();
-                itemAtivo = (itemAtivo + (e.key === 'ArrowDown' ? 1 : -1) + itens.length) % itens.length;
-                itens.forEach(function (a, i) { a.classList.toggle('ativo', i === itemAtivo); });
-            } else if (e.key === 'Enter' && itemAtivo >= 0 && itens[itemAtivo]) { e.preventDefault(); window.location = itens[itemAtivo].href; }
-        });
-        document.addEventListener('click', function (e) { if (!formBusca.contains(e.target)) fecharSugestoes(); });
-        formBusca.addEventListener('submit', function (e) { if (!campo.value.trim()) e.preventDefault(); });
-    }
-
-    // ---------- CARROSSEL INFINITO (Mais vendidos, Promoções, Novidades) ----------
-    // Cada carrossel tem: uma trilha com os cards e duas setas redondas nas laterais.
-    $$('.carousel-wrap').forEach(function (caixa) {
-        var viewport = $('.carousel-viewport', caixa), trilho = $('.carousel-track', caixa);
-        var esq = $('.seta-esq', caixa), dir = $('.seta-dir', caixa);
-        if (!viewport || !trilho || !esq || !dir) return;
-        var ocupado = false, DURACAO = 650, SUAVE = 'cubic-bezier(.22,.8,.24,1)';
-        function passo() { var gap = parseFloat(getComputedStyle(trilho).columnGap) || 0; return trilho.children[0].getBoundingClientRect().width + gap; }
-        function visiveis() { return Math.round(viewport.getBoundingClientRect().width / passo()); }
-        function ajustar() { esq.hidden = dir.hidden = trilho.children.length <= visiveis(); }
-        function proximo() {   // anda um card para a esquerda e manda o primeiro para o fim da fila
-            if (ocupado) return; ocupado = true;
-            trilho.style.transition = 'transform ' + DURACAO + 'ms ' + SUAVE; trilho.style.transform = 'translateX(' + (-passo()) + 'px)';
-            setTimeout(function () { trilho.style.transition = 'none'; trilho.appendChild(trilho.firstElementChild); trilho.style.transform = 'translateX(0)'; ocupado = false; }, DURACAO);
-        }
-        function anterior() {  // traz o último card para o começo e anda para a direita
-            if (ocupado) return; ocupado = true;
-            trilho.style.transition = 'none'; trilho.insertBefore(trilho.lastElementChild, trilho.firstElementChild);
-            trilho.style.transform = 'translateX(' + (-passo()) + 'px)'; void trilho.offsetWidth;
-            trilho.style.transition = 'transform ' + DURACAO + 'ms ' + SUAVE; trilho.style.transform = 'translateX(0)';
-            setTimeout(function () { ocupado = false; }, DURACAO);
-        }
-        dir.addEventListener('click', proximo); esq.addEventListener('click', anterior);
-        window.addEventListener('resize', ajustar); ajustar();
+// ---------- Menu do topo: botão do celular e menus que abrem ao clicar ----------
+const cabecalho = buscar('#lojaHeader');
+if (cabecalho) {
+    buscar('#navToggle').addEventListener('click', function () {
+        cabecalho.classList.toggle('menu-aberto');
     });
 
-    // ---------- ANIMAÇÃO DE ENTRADA: os blocos com a classe "reveal" aparecem suavemente ao rolar ----------
-    var revelar = $$('.reveal');
-    if ('IntersectionObserver' in window) {
-        var obs = new IntersectionObserver(function (lista) {
-            lista.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('visivel'); obs.unobserve(e.target); } });
-        }, { threshold: 0.12 });
-        revelar.forEach(function (el) { obs.observe(el); });
-    } else { revelar.forEach(function (el) { el.classList.add('visivel'); }); }
+    // O ícone da conta abre uma lista; clicar fora fecha
+    const menus = buscarTodos('.user-dd');
+    menus.forEach(function (menu) {
+        buscar('button', menu).addEventListener('click', function (e) {
+            e.stopPropagation();
+            const estavaAberto = menu.classList.contains('aberto');
+            menus.forEach(function (m) { m.classList.remove('aberto'); });
+            if (!estavaAberto) menu.classList.add('aberto');
+        });
+    });
+    document.addEventListener('click', function () {
+        menus.forEach(function (m) { m.classList.remove('aberto'); });
+    });
+}
 
-    // ---------- NEWSLETTER ----------
-    var news = $('#newsletterForm');
-    if (news) news.addEventListener('submit', function (e) { e.preventDefault(); news.reset(); toast('Inscrito! Valeu por entrar no som alto.'); });
+// ---------- Carrossel (Mais vendidos, Promoções, Novidades) ----------
+// Os cards andam um por vez: o primeiro vai para o fim da fila (ou o último vem para o começo).
+buscarTodos('.carousel-wrap').forEach(function (caixa) {
+    const trilho = buscar('.carousel-track', caixa);
+    const setaEsq = buscar('.seta-esq', caixa);
+    const setaDir = buscar('.seta-dir', caixa);
+    const TEMPO = 650;
+    let andando = false;
 
-    // ---------- QUANTIDADE COM − E + (produto e carrinho) ----------
-    $$('[data-qtd]').forEach(function (cx) {
-        var input = $('input[type=number]', cx), auto = cx.hasAttribute('data-auto');
-        function mudar(delta) {
-            var max = parseInt(input.max, 10) || 99, v = (parseInt(input.value, 10) || 1) + delta;
-            v = Math.max(1, Math.min(max, v));
-            if (v === parseInt(input.value, 10)) return;
-            input.value = v; if (auto) cx.submit();
-        }
-        $('[data-menos]', cx).addEventListener('click', function () { mudar(-1); });
-        $('[data-mais]', cx).addEventListener('click', function () { mudar(1); });
-        if (auto) input.addEventListener('change', function () { cx.submit(); });
+    function larguraDoPasso() {
+        const espaco = parseFloat(getComputedStyle(trilho).columnGap) || 0;
+        return trilho.children[0].getBoundingClientRect().width + espaco;
+    }
+
+    // só mostra as setas se tiver mais cards do que cabe na tela
+    function mostrarSetas() {
+        const cabem = Math.round(buscar('.carousel-viewport', caixa).getBoundingClientRect().width / larguraDoPasso());
+        setaEsq.hidden = setaDir.hidden = trilho.children.length <= cabem;
+    }
+
+    setaDir.addEventListener('click', function () {
+        if (andando) return;
+        andando = true;
+        trilho.style.transition = 'transform ' + TEMPO + 'ms ease';
+        trilho.style.transform = 'translateX(' + (-larguraDoPasso()) + 'px)';
+        setTimeout(function () {
+            trilho.style.transition = 'none';
+            trilho.appendChild(trilho.firstElementChild);
+            trilho.style.transform = 'translateX(0)';
+            andando = false;
+        }, TEMPO);
     });
 
-    // ---------- ORDENAR E FILTROS (categorias e busca): atualiza a lista sem recarregar a página ----------
-    var form = $('#formFiltros[data-lista]');
-    if (form) {
-        var painel = $('#painelFiltros'), btnF = $('#alternarFiltros'), btnO = $('#btnOrdenar'), menuO = $('#menuOrdenar');
-        var chips = $('#chipsAtivos'), contador = $('#contadorFiltros'), pendente = 0;
+    setaEsq.addEventListener('click', function () {
+        if (andando) return;
+        andando = true;
+        trilho.style.transition = 'none';
+        trilho.insertBefore(trilho.lastElementChild, trilho.firstElementChild);
+        trilho.style.transform = 'translateX(' + (-larguraDoPasso()) + 'px)';
+        trilho.offsetWidth; // força o navegador a aplicar a posição antes da animação
+        trilho.style.transition = 'transform ' + TEMPO + 'ms ease';
+        trilho.style.transform = 'translateX(0)';
+        setTimeout(function () { andando = false; }, TEMPO);
+    });
 
-        function abrirFiltros(abrir) {
-            painel.hidden = !abrir;
-            btnF.setAttribute('aria-expanded', abrir ? 'true' : 'false'); btnF.classList.toggle('is-active', abrir);
-            document.body.classList.toggle('filtros-aberto', abrir && window.innerWidth <= 900);
-        }
-        function marcados() { return $$('.filtros-lateral input[type=checkbox]:checked', form); }
-        function mostrarChips() {
-            var ms = marcados();
-            chips.innerHTML = ms.map(function (c, i) { return '<button type="button" class="chip" data-i="' + i + '">' + esc(c.getAttribute('data-rotulo') || c.value) + ' <i class="bi bi-x"></i></button>'; }).join('') +
-                (ms.length > 1 ? '<button type="button" class="chip chip-limpar" data-limpar>Limpar tudo</button>' : '');
-            contador.textContent = ms.length ? ' (' + ms.length + ')' : '';
-            $$('.chip[data-i]', chips).forEach(function (b) { b.addEventListener('click', function () { ms[b.getAttribute('data-i')].checked = false; atualizar(); }); });
-            var l = $('[data-limpar]', chips); if (l) l.addEventListener('click', limpar);
-        }
-        function url() {
-            var dados = new URLSearchParams(new FormData(form)); var qs = dados.toString();
-            return form.getAttribute('action') + (qs ? '?' + qs : '');
-        }
-        function atualizar() {
-            var alvo = url(), id = ++pendente;
-            mostrarChips(); history.replaceState(null, '', alvo);
-            var res = $('#resultados'); res.classList.add('carregando');
-            fetch(alvo).then(function (r) { return r.text(); }).then(function (html) {
-                if (id !== pendente) return;
-                var doc = new DOMParser().parseFromString(html, 'text/html');
-                var novo = $('#resultados', doc), info = $('#resultadoInfo', doc);
-                if (novo) res.innerHTML = novo.innerHTML;
-                if (info) $('#resultadoInfo').textContent = info.textContent;
-                res.classList.remove('carregando');
-            }).catch(function () { window.location = alvo; });
-        }
-        function limpar() { marcados().forEach(function (c) { c.checked = false; }); atualizar(); }
+    window.addEventListener('resize', mostrarSetas);
+    mostrarSetas();
+});
 
-        btnF.addEventListener('click', function () { abrirFiltros(painel.hidden); });
-        $('#fecharFiltros').addEventListener('click', function () { abrirFiltros(false); });
-        $('#limparFiltros').addEventListener('click', limpar);
-        form.addEventListener('change', function (e) { if (e.target.name === 'ordem') { $$('.dd-opcao', menuO).forEach(function (o) { o.classList.toggle('is-active', o.contains(e.target)); }); menuO.hidden = true; btnO.setAttribute('aria-expanded', 'false'); } atualizar(); });
-        form.addEventListener('submit', function (e) { e.preventDefault(); atualizar(); });
-        btnO.addEventListener('click', function (e) { e.stopPropagation(); menuO.hidden = !menuO.hidden; btnO.setAttribute('aria-expanded', menuO.hidden ? 'true' : 'false'); });
-        document.addEventListener('click', function (e) { if (!menuO.hidden && !menuO.contains(e.target)) { menuO.hidden = true; btnO.setAttribute('aria-expanded', 'false'); } });
+// ---------- Animação: blocos com a classe "reveal" aparecem suavemente ao rolar a página ----------
+const observador = new IntersectionObserver(function (lista) {
+    lista.forEach(function (item) {
+        if (item.isIntersecting) {
+            item.target.classList.add('visivel');
+            observador.unobserve(item.target);
+        }
+    });
+}, { threshold: 0.12 });
+buscarTodos('.reveal').forEach(function (el) { observador.observe(el); });
 
-        // o painel é um menu que abre embaixo do botão "Filtros": fecha ao clicar fora ou apertar Esc
-        document.addEventListener('click', function (e) { if (!painel.hidden && !e.target.closest('.dd-filtros') && !e.target.closest('.chips-ativos')) abrirFiltros(false); });
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !painel.hidden) abrirFiltros(false); });
-        mostrarChips();
+// ---------- Newsletter ----------
+const newsletter = buscar('#newsletterForm');
+if (newsletter) {
+    newsletter.addEventListener('submit', function (e) {
+        e.preventDefault();
+        newsletter.reset();
+        const aviso = document.createElement('div');
+        aviso.className = 'toast-loja';
+        aviso.textContent = 'Inscrito! Valeu por entrar no som alto.';
+        document.body.appendChild(aviso);
+        setTimeout(function () { aviso.remove(); }, 2600);
+    });
+}
+
+// ---------- Quantidade com botões − e + (página do produto e carrinho) ----------
+buscarTodos('[data-qtd]').forEach(function (caixa) {
+    const campo = buscar('input[type=number]', caixa);
+    const enviaSozinho = caixa.hasAttribute('data-auto'); // no carrinho, envia o formulário ao mudar
+
+    function mudar(valor) {
+        const nova = Math.max(1, Math.min(parseInt(campo.max) || 99, parseInt(campo.value) + valor));
+        if (nova === parseInt(campo.value)) return;
+        campo.value = nova;
+        if (enviaSozinho) caixa.submit();
+    }
+    buscar('[data-menos]', caixa).addEventListener('click', function () { mudar(-1); });
+    buscar('[data-mais]', caixa).addEventListener('click', function () { mudar(1); });
+});
+
+// ---------- Páginas com lista: "Ordenar por" e "Filtros" ----------
+const formFiltros = buscar('#formFiltros');
+if (formFiltros) {
+    const painel = buscar('#painelFiltros');
+    const menuOrdenar = buscar('#menuOrdenar');
+
+    // o painel de filtros abre embaixo do botão "Filtros"
+    buscar('#alternarFiltros').addEventListener('click', function (e) {
+        e.stopPropagation();
+        painel.hidden = !painel.hidden;
+    });
+    buscar('#btnOrdenar').addEventListener('click', function (e) {
+        e.stopPropagation();
+        menuOrdenar.hidden = !menuOrdenar.hidden;
+    });
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.dd-filtros')) painel.hidden = true;
+        if (!e.target.closest('.dd-ordenar')) menuOrdenar.hidden = true;
+    });
+
+    // mexeu em qualquer filtro ou na ordem: envia o formulário e a página recarrega com o resultado
+    formFiltros.addEventListener('change', function () { formFiltros.submit(); });
+}
+
+// ---------- Página do produto: miniaturas trocam o fundo da foto grande ----------
+buscarTodos('.miniatura').forEach(function (mini) {
+    mini.addEventListener('click', function () {
+        buscar('.produto-foto').style.background = mini.dataset.fundo;
+        buscarTodos('.miniatura').forEach(function (m) { m.classList.remove('ativa'); });
+        mini.classList.add('ativa');
+    });
+});
+
+// ---------- Disco de vinil da home: gira sozinho, o clique acelera e liga/desliga a música ----------
+const disco = buscar('#vinil');
+if (disco) {
+    const botaoSom = buscar('#vinilSom');
+    const VELOCIDADE_NORMAL = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 25; // graus por segundo
+    let angulo = 0;
+    let velocidade = VELOCIDADE_NORMAL;
+    let ultimoTempo = performance.now();
+
+    // a velocidade volta devagar para a normal; o clique dá um empurrão
+    function girar(agora) {
+        const segundos = (agora - ultimoTempo) / 1000;
+        ultimoTempo = agora;
+        velocidade = velocidade + (VELOCIDADE_NORMAL - velocidade) * segundos * 0.8;
+        angulo = angulo + velocidade * segundos;
+        disco.style.transform = 'rotate(' + angulo + 'deg)';
+        requestAnimationFrame(girar);
+    }
+    requestAnimationFrame(girar);
+
+    // música: o navegador só deixa tocar depois do primeiro clique na página
+    const musica = new Audio('/audio/musica.mp3');
+    musica.loop = true;
+    musica.volume = 0.5;
+    let comecou = false;
+    let horaDoInicio = 0;
+
+    function mostrarEstado() {
+        let texto = 'Clique no disco para tocar rock';
+        let icone = 'bi-volume-mute-fill';
+        if (comecou && !musica.muted) { texto = 'Tocando · clique no disco para silenciar'; icone = 'bi-volume-up-fill'; }
+        if (comecou && musica.muted) { texto = 'Mudo · clique no disco para ligar o som'; }
+        botaoSom.querySelector('span').textContent = texto;
+        botaoSom.querySelector('i').className = 'bi ' + icone;
     }
 
-    // ---------- MÚSICA: toca o arquivo public/audio/musica.mp3 em repetição ----------
-    // Para trocar a música, basta substituir esse arquivo (mantendo o nome musica.mp3).
-    function criarMusica() {
-        var audio = new Audio('/audio/musica.mp3');
-        audio.loop = true; audio.volume = 0.5;
-        var tocando = false;
-        // ao trocar de aba, pausa; ao voltar, continua (se não estiver mutada)
-        document.addEventListener('visibilitychange', function () {
-            if (document.hidden) audio.pause(); else if (tocando) audio.play().catch(function () {});
-        });
-        return {
-            iniciar: function () { tocando = true; audio.play().catch(function () {}); },
-            mudo: function (m) { audio.muted = m; }
-        };
+    document.addEventListener('pointerdown', function () {
+        if (comecou) return;
+        comecou = true;
+        horaDoInicio = performance.now();
+        musica.play();
+        mostrarEstado();
+    }, { once: true });
+
+    function clicouNoDisco(e) {
+        if (e.currentTarget === disco) {
+            const meio = disco.getBoundingClientRect().left + disco.offsetWidth / 2;
+            const lado = e.clientX > meio ? 1 : -1; // clicou na direita ou na esquerda do disco
+            velocidade = velocidade + lado * 500;
+        }
+        // o clique que acabou de ligar a música não deve silenciá-la
+        if (performance.now() - horaDoInicio < 600) return;
+        if (!comecou) { comecou = true; musica.play(); }
+        else { musica.muted = !musica.muted; }
+        mostrarEstado();
+    }
+    disco.addEventListener('click', clicouNoDisco);
+    botaoSom.addEventListener('click', clicouNoDisco);
+
+    // pausa a música quando a aba fica escondida
+    document.addEventListener('visibilitychange', function () {
+        if (!comecou) return;
+        if (document.hidden) musica.pause(); else musica.play();
+    });
+}
+
+// ---------- Checkout (página única): recalcula o resumo ao trocar endereço, entrega, pagamento ou cupom ----------
+const formCheckout = buscar('#formCheckout');
+if (formCheckout) {
+    const subtotal = parseFloat(formCheckout.dataset.subtotal);
+    const CUPOM = formCheckout.dataset.cupom;
+    const CUPOM_PCT = parseFloat(formCheckout.dataset.cupomPct);
+    const PIX_PCT = parseFloat(formCheckout.dataset.pixPct);
+    const EXPRESSA = parseFloat(formCheckout.dataset.expressa);
+    const PARCELAS_MAX = parseInt(formCheckout.dataset.parcelas);
+    const campoCupom = buscar('#campoCupom');
+    const msgCupom = buscar('#msgCupom');
+    let cupomAplicado = false;
+
+    function moeda(v) { return 'R$ ' + (Math.round(v * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    function fretePadraoEscolhido() {
+        const marcado = buscar('input[name=endereco_id]:checked', formCheckout);
+        return marcado ? parseFloat(marcado.dataset.frete) || 0 : 0;
     }
 
-    // ---------- DISCO DE VINIL (hero): gira sozinho; cliques e arrastos mudam a velocidade e o sentido ----------
-    var vinil = $('#vinil'), zona = $('#vinilZona'), tilt = $('#vinilTilt');
-    if (vinil && zona) {
-        // som: 'parado' (ainda não começou), 'tocando' ou 'mudo'. O navegador só libera áudio depois do primeiro toque na página.
-        var somBtn = $('#vinilSom'), musica = null, estado = 'parado', inicioSom = 0, mudoSalvo = false;
-        try { mudoSalvo = localStorage.getItem('sp_mudo') === '1'; } catch (e) {}
-        function mostrarSom() {
-            if (!somBtn) return;
-            var textos = { parado: 'Clique no disco para tocar rock', tocando: 'Tocando · clique no disco para silenciar', mudo: 'Mudo · clique no disco para ligar o som' };
-            somBtn.querySelector('i').className = 'bi ' + (estado === 'tocando' ? 'bi-volume-up-fill' : 'bi-volume-mute-fill');
-            somBtn.querySelector('span').textContent = textos[estado]; zona.classList.toggle('com-som', estado === 'tocando');
-        }
-        function alternarSom(automatico) {
-            if (!automatico && performance.now() - inicioSom < 600) return;   // o toque que acabou de ligar a música não deve silenciá-la
-            if (!musica) { musica = criarMusica(); if (!musica) return; }
-            if (estado === 'parado') { musica.iniciar(); inicioSom = performance.now(); estado = 'tocando'; if (mudoSalvo) { musica.mudo(true); estado = 'mudo'; } }
-            else if (estado === 'tocando') { musica.mudo(true); estado = 'mudo'; }
-            else { musica.mudo(false); estado = 'tocando'; }
-            try { localStorage.setItem('sp_mudo', estado === 'mudo' ? '1' : '0'); } catch (e) {}
-            mostrarSom();
-        }
-        ['pointerdown', 'keydown'].forEach(function (ev) { document.addEventListener(ev, function () { if (estado === 'parado') alternarSom(true); }, { once: true }); });
-        if (somBtn) somBtn.addEventListener('click', function () { alternarSom(false); });
-        mostrarSom();
-
-        var BASE = reduzir ? 0 : 360 / 14;           // graus por segundo (uma volta a cada 14 s)
-        var ang = 0, vel = BASE, arrastando = false, ultimoAng = 0, ultimoT = 0, moveu = 0, inicioT = 0, visivel = true, anterior = performance.now();
-
-        function centro() { var r = vinil.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 }; }
-        function anguloDoPonteiro(e) { var c = centro(); return Math.atan2(e.clientY - c.y, e.clientX - c.x) * 180 / Math.PI; }
-        function impulso(direcao, forca) {
-            var alvo = vel + direcao * forca;
-            vel = Math.max(-2600, Math.min(2600, alvo));
-            zona.classList.add('acelerado'); clearTimeout(impulso.t); impulso.t = setTimeout(function () { zona.classList.remove('acelerado'); }, 900);
-        }
-        function onda(e) {   // anel que se abre onde clicou
-            var r = vinil.getBoundingClientRect(), o = document.createElement('span');
-            o.className = 'vinyl-onda'; o.style.left = (e.clientX - r.left) + 'px'; o.style.top = (e.clientY - r.top) + 'px';
-            vinil.parentNode.appendChild(o); setTimeout(function () { o.remove(); }, 700);
-        }
-
-        function loop(agora) {
-            var dt = Math.min(0.05, (agora - anterior) / 1000); anterior = agora;
-            if (!arrastando) {
-                vel += (BASE - vel) * (1 - Math.exp(-dt * 0.8));   // volta devagar para a velocidade normal
-                ang += vel * dt;
-            }
-            vinil.style.transform = 'rotate(' + ang + 'deg)';
-            if (visivel && !document.hidden) requestAnimationFrame(loop);
-        }
-        function iniciarLoop() { anterior = performance.now(); requestAnimationFrame(loop); }
-        if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { var v = es[0].isIntersecting; if (v && !visivel) { visivel = true; iniciarLoop(); } visivel = v; }).observe(zona);
-        document.addEventListener('visibilitychange', function () { if (!document.hidden && visivel) iniciarLoop(); });
-        iniciarLoop();
-
-        vinil.addEventListener('pointerdown', function (e) {
-            arrastando = true; moveu = 0; inicioT = performance.now(); ultimoAng = anguloDoPonteiro(e); ultimoT = inicioT;
-            vinil.setPointerCapture(e.pointerId); zona.classList.add('segurando');
+    // mostra o painel da forma de pagamento escolhida (Pix, Cartão ou Boleto) e esconde os outros
+    function mostrarPainelPagamento() {
+        const forma = buscar('input[name=forma]:checked', formCheckout).value;
+        buscarTodos('[data-painel]', formCheckout).forEach(function (painel) {
+            painel.hidden = painel.dataset.painel !== forma;
         });
-        vinil.addEventListener('pointermove', function (e) {
-            if (!arrastando) return;
-            var a = anguloDoPonteiro(e), d = a - ultimoAng, t = performance.now();
-            if (d > 180) d -= 360; if (d < -180) d += 360;
-            ang += d; moveu += Math.abs(d);
-            var dtm = Math.max(1, t - ultimoT) / 1000; vel = Math.max(-2600, Math.min(2600, 0.6 * vel + 0.4 * (d / dtm)));
-            ultimoAng = a; ultimoT = t;
+        buscarTodos('.aba', formCheckout).forEach(function (aba) {
+            aba.classList.toggle('ativa', buscar('input', aba).checked);
         });
-        function soltar(e) {
-            if (!arrastando) return; arrastando = false; zona.classList.remove('segurando');
-            if (moveu < 6 && performance.now() - inicioT < 350) {     // foi um clique: dá um empurrão no lado clicado
-                var c = centro(), lado = e.clientX >= c.x ? 1 : -1;
-                impulso(lado, 520); onda(e); alternarSom(false);
-            }
-        }
-        vinil.addEventListener('pointerup', soltar); vinil.addEventListener('pointercancel', soltar);
-        vinil.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); impulso(e.shiftKey ? -1 : 1, 520); alternarSom(false); } });
+    }
 
-        // o mouse perto do disco inclina o conjunto, como se ele flutuasse
-        if (!reduzir && tilt) {
-            zona.addEventListener('pointermove', function (e) {
-                if (e.pointerType === 'touch') return;
-                var r = zona.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-                tilt.style.transform = 'perspective(900px) rotateY(' + (x * 14) + 'deg) rotateX(' + (-y * 14) + 'deg)';
+    // preenche o seletor de parcelas (1x a 6x, sem juros)
+    const selectParcelas = buscar('#parcelas');
+    if (selectParcelas) {
+        for (let n = 1; n <= PARCELAS_MAX; n++) {
+            const opcao = document.createElement('option');
+            opcao.value = n;
+            opcao.textContent = n + 'x de ' + moeda(subtotal / n) + (n === 1 ? ' à vista' : ' sem juros');
+            selectParcelas.appendChild(opcao);
+        }
+    }
+
+    // monta de novo o Subtotal, Descontos, Frete e Total do resumo
+    function recalcular() {
+        const entrega = buscar('input[name=entrega]:checked', formCheckout).value;
+        const forma = buscar('input[name=forma]:checked', formCheckout).value;
+        const frete = entrega === 'expressa' ? EXPRESSA : fretePadraoEscolhido();
+
+        let desconto = cupomAplicado ? subtotal * CUPOM_PCT / 100 : 0;
+        if (forma === 'pix') desconto += subtotal * PIX_PCT / 100;
+
+        buscar('#precoPadrao').textContent = fretePadraoEscolhido() === 0 ? 'Grátis' : moeda(fretePadraoEscolhido());
+        buscar('#valFrete').textContent = frete === 0 ? 'Grátis' : moeda(frete);
+        buscar('#valDescontos').textContent = '- ' + moeda(desconto);
+        buscar('#valTotal').textContent = moeda(subtotal - desconto + frete);
+        mostrarPainelPagamento();
+    }
+
+    formCheckout.addEventListener('change', recalcular);
+    recalcular();
+
+    buscar('#aplicarCupom').addEventListener('click', function () {
+        if (campoCupom.value.trim().toUpperCase() === CUPOM) {
+            cupomAplicado = true;
+            msgCupom.textContent = 'Cupom aplicado! ' + CUPOM_PCT + '% de desconto.';
+            msgCupom.className = 'cupom-msg ok';
+        } else {
+            cupomAplicado = false;
+            msgCupom.textContent = 'Cupom inválido.';
+            msgCupom.className = 'cupom-msg erro';
+        }
+        recalcular();
+    });
+
+    // máscara simples do número e da validade do cartão
+    const cartaoNumero = buscar('#cartaoNumero');
+    if (cartaoNumero) cartaoNumero.addEventListener('input', function () {
+        cartaoNumero.value = cartaoNumero.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+    });
+    const cartaoValidade = buscar('#cartaoValidade');
+    if (cartaoValidade) cartaoValidade.addEventListener('input', function () {
+        const n = cartaoValidade.value.replace(/\D/g, '').slice(0, 4);
+        cartaoValidade.value = n.length > 2 ? n.slice(0, 2) + '/' + n.slice(2) : n;
+    });
+}
+
+// ---------- Botão "Copiar código" (Pix e boleto) ----------
+buscarTodos('[data-copiar]').forEach(function (botao) {
+    botao.addEventListener('click', function () {
+        const texto = buscar(botao.dataset.copiar).textContent;
+        navigator.clipboard.writeText(texto).then(function () {
+            const original = botao.textContent;
+            botao.textContent = 'Copiado!';
+            setTimeout(function () { botao.textContent = original; }, 1800);
+        });
+    });
+});
+
+// ---------- Página do produto: abas (Descrição / Especificações / Avaliações) ----------
+const abasProduto = buscarTodos('.aba-produto');
+if (abasProduto.length) {
+    abasProduto.forEach(function (aba) {
+        aba.addEventListener('click', function () {
+            abasProduto.forEach(function (a) { a.classList.remove('ativa'); });
+            aba.classList.add('ativa');
+            buscarTodos('[data-painel-produto]').forEach(function (painel) {
+                painel.hidden = painel.dataset.painelProduto !== aba.dataset.aba;
             });
-            zona.addEventListener('pointerleave', function () { tilt.style.transform = ''; });
-        }
+        });
+    });
+}
+
+// ---------- Calcular frete e prazo na página do produto ----------
+const btnFrete = buscar('#btnCalcularFrete');
+if (btnFrete) {
+    const campoCep = buscar('#cepFrete');
+    const resultado = buscar('#resultadoFrete');
+    const produtoId = window.location.pathname.split('/').pop();
+
+    campoCep.addEventListener('input', function () {
+        campoCep.value = campoCep.value.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
+    });
+
+    btnFrete.addEventListener('click', function () {
+        resultado.innerHTML = 'Calculando...';
+        const dados = new URLSearchParams({ cep: campoCep.value });
+        fetch('/produto/' + produtoId + '/frete', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: dados })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.erro) { resultado.innerHTML = '<p class="erro">' + d.erro + '</p>'; return; }
+                resultado.innerHTML =
+                    '<p><span>Padrão (' + d.padrao.prazo + ')</span><strong>' + (d.padrao.gratis ? 'Grátis' : 'R$ ' + d.padrao.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })) + '</strong></p>' +
+                    '<p><span>Expressa (' + d.expressa.prazo + ')</span><strong>R$ ' + d.expressa.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '</strong></p>';
+            })
+            .catch(function () { resultado.innerHTML = '<p class="erro">Não foi possível calcular agora.</p>'; });
+    });
+}
+
+// ---------- Quiz "Qual é o seu estilo de rock?" (até 5 perguntas) ----------
+const quiz = buscar('#quizRock');
+if (quiz) {
+    // cada opção tem um "genero" que já existe no banco (campo "genero" dos discos e roupas)
+    const PERGUNTAS = [
+        { pergunta: 'Qual dessas bandas mais toca no seu fone?', opcoes: [
+            { texto: 'Led Zeppelin ou Queen', genero: 'Rock Clássico' },
+            { texto: 'Iron Maiden ou Metallica', genero: 'Heavy Metal' },
+            { texto: 'Ramones ou Ratos de Porão', genero: 'Punk Rock' },
+            { texto: 'Nirvana ou Alice in Chains', genero: 'Grunge' },
+            { texto: 'Legião Urbana', genero: 'Rock Nacional' }
+        ] },
+        { pergunta: 'Como você prefere curtir um show?', opcoes: [
+            { texto: 'Sentado, curtindo cada solo', genero: 'Rock Progressivo' },
+            { texto: 'No meio do moshpit', genero: 'Heavy Metal' },
+            { texto: 'Pulando e gritando o refrão', genero: 'Punk Rock' },
+            { texto: 'Guitarra suja e balançando a cabeça', genero: 'Grunge' },
+            { texto: 'Cantando em português a plenos pulmões', genero: 'Rock Nacional' }
+        ] },
+        { pergunta: 'Qual peça combina mais com você?', opcoes: [
+            { texto: 'Camiseta clássica de banda', genero: 'Rock Clássico' },
+            { texto: 'Jaqueta cheia de patch', genero: 'Heavy Metal' },
+            { texto: 'Moletom rasgado', genero: 'Punk Rock' },
+            { texto: 'Camiseta oversized e descolorida', genero: 'Grunge' },
+            { texto: 'Camiseta de banda nacional', genero: 'Rock Nacional' }
+        ] },
+        { pergunta: 'Qual instrumento você mais repara numa música?', opcoes: [
+            { texto: 'O solo de guitarra', genero: 'Rock Clássico' },
+            { texto: 'O peso da bateria dupla', genero: 'Heavy Metal' },
+            { texto: 'O ritmo acelerado', genero: 'Punk Rock' },
+            { texto: 'O baixo distorcido', genero: 'Grunge' },
+            { texto: 'A letra em português', genero: 'Rock Nacional' }
+        ] },
+        { pergunta: 'Se fosse montar uma coleção de discos, começaria por...', opcoes: [
+            { texto: 'Um vinil clássico dos anos 70', genero: 'Rock Clássico' },
+            { texto: 'Um álbum de heavy metal', genero: 'Heavy Metal' },
+            { texto: 'Um disco de punk underground', genero: 'Punk Rock' },
+            { texto: 'Um CD de grunge dos anos 90', genero: 'Grunge' },
+            { texto: 'Um clássico do rock brasileiro', genero: 'Rock Nacional' }
+        ] }
+    ];
+
+    let indice = 0;
+    const pontos = {};
+
+    function mostrarPergunta() {
+        const p = PERGUNTAS[indice];
+        buscar('.quiz-progresso span', quiz).style.width = (indice / PERGUNTAS.length * 100) + '%';
+        buscar('.quiz-pergunta h3', quiz).textContent = p.pergunta;
+        const lista = buscar('.quiz-opcoes', quiz);
+        lista.innerHTML = '';
+        p.opcoes.forEach(function (opcao) {
+            const botao = document.createElement('button');
+            botao.type = 'button';
+            botao.textContent = opcao.texto;
+            botao.addEventListener('click', function () { escolher(opcao.genero); });
+            lista.appendChild(botao);
+        });
     }
-})();
+
+    function escolher(genero) {
+        pontos[genero] = (pontos[genero] || 0) + 1;
+        indice++;
+        if (indice < PERGUNTAS.length) return mostrarPergunta();
+
+        // descobre o gênero com mais pontos e guarda a escolha para a próxima visita
+        const vencedor = Object.keys(pontos).sort(function (a, b) { return pontos[b] - pontos[a]; })[0];
+        try { localStorage.setItem('sp_estilo', vencedor); } catch (e) {}
+
+        buscar('.quiz-progresso span', quiz).style.width = '100%';
+        buscar('.quiz-pergunta', quiz).hidden = true;
+        const resultado = buscar('.quiz-resultado', quiz);
+        resultado.hidden = false;
+        buscar('.quiz-resultado h3', quiz).textContent = 'Seu estilo é ' + vencedor + '!';
+        destacarRecomendados(vencedor);
+    }
+
+    buscar('#quizComecar').addEventListener('click', function () {
+        buscar('.quiz-intro', quiz).hidden = true;
+        buscar('.quiz-caixa', quiz).hidden = false;
+        mostrarPergunta();
+    });
+}
+
+// Coloca os produtos do gênero preferido na frente de cada vitrine e marca com um selo "Combina com seu estilo"
+function destacarRecomendados(genero) {
+    buscarTodos('.carousel-track').forEach(function (trilho) {
+        const cards = buscarTodos('.product-card', trilho);
+        let encontrou = false;
+        cards.forEach(function (card) {
+            if (card.dataset.genero === genero) {
+                encontrou = true;
+                if (!buscar('.combina-tag', card)) {
+                    const selo = document.createElement('em');
+                    selo.className = 'combina-tag';
+                    selo.textContent = 'Combina com seu estilo';
+                    buscar('.product-photo', card).appendChild(selo);
+                }
+                trilho.insertBefore(card, trilho.firstChild);
+            }
+        });
+        if (encontrou) trilho.closest('.carousel-wrap').querySelectorAll('.seta').forEach(function (s) {});
+    });
+}
+
+// se a pessoa já fez o quiz numa visita anterior, já destaca ao carregar a página
+try {
+    const estiloSalvo = localStorage.getItem('sp_estilo');
+    if (estiloSalvo) destacarRecomendados(estiloSalvo);
+} catch (e) {}
+
+
+// ---------- Cartazes do topo: trocam sozinhos a cada 6 segundos (e pelas bolinhas) ----------
+const cartazes = buscar('#cartazCarrossel');
+if (cartazes) {
+    const trilhoCartaz = buscar('.cartaz-trilho', cartazes);
+    const bolinhasCartaz = buscarTodos('.cartaz-bolinhas button', cartazes);
+    const totalCartazes = bolinhasCartaz.length;
+    let posicaoCartaz = 0;
+
+    function irParaCartaz(n) {
+        posicaoCartaz = (n + totalCartazes) % totalCartazes;
+        trilhoCartaz.style.transform = 'translateX(' + (-posicaoCartaz * 100) + '%)';
+        bolinhasCartaz.forEach(function (b, i) { b.classList.toggle('ativa', i === posicaoCartaz); });
+    }
+    bolinhasCartaz.forEach(function (b, i) { b.addEventListener('click', function () { irParaCartaz(i); }); });
+
+    let pausado = false;
+    cartazes.addEventListener('mouseenter', function () { pausado = true; });
+    cartazes.addEventListener('mouseleave', function () { pausado = false; });
+    setInterval(function () { if (!pausado) irParaCartaz(posicaoCartaz + 1); }, 6000);
+}

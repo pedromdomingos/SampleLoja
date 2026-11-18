@@ -1,86 +1,75 @@
+<%# ACOMPANHAR ENTREGA: etapas na coluna da esquerda e resumo escuro na direita. Recebe: pedido, itens, historico, ETAPAS, formas, novo, podeCancelar. %>
 <%- include('../admin/partials/header') %>
 <%- include('../partials/loja-topo') %>
-
 <%- include('../partials/cabecalho-pagina', {
-    caminho: [{ t: 'Meus pedidos', u: '/pedidos' }, { t: 'Pedido #' + pedido.id }],
-    titulo: novo ? 'PEDIDO CONFIRMADO' : 'PEDIDO #' + pedido.id,
-    texto: novo ? 'Obrigado pela compra! O pedido #' + pedido.id + ' foi registrado e está logo abaixo.' : '',
+    caminho: [{ t: 'Meus pedidos', u: '/pedidos' }, { t: 'Pedido SP' + String(pedido.id).padStart(5, '0') }],
+    titulo: novo ? 'PEDIDO REALIZADO' : 'ACOMPANHAR ENTREGA',
+    texto: 'Pedido SP' + String(pedido.id).padStart(5, '0'),
     pills: [], etapa: novo ? 3 : 0, etapaFeita: novo
 }) %>
 
 <main class="loja-pagina">
-    <p class="pedido-status-linha">Status: <span class="status-pedido status-<%= slugStatus(pedido.status) %>"><%= pedido.status %></span></p>
+    <div class="pedido-grid">
+        <section class="cartao-claro cartao-acompanhar">
+            <p class="previsao"><i class="bi bi-truck"></i> PREVISÃO DE ENTREGA: <%= pedido.entrega === 'expressa' ? '2 a 3 dias úteis' : '5 a 8 dias úteis' %></p>
+            <%- include('../partials/linha-do-tempo') %>
 
-    <section class="sample-panel">
-        <div class="panel-heading"><h2>ACOMPANHAR ENTREGA</h2></div>
-        <%- include('../partials/linha-do-tempo') %>
-        <div class="rastreio-caixa">
-            <span class="muted">Código de rastreio</span>
-            <strong class="rastreio-codigo"><%= pedido.codigo_rastreio %></strong>
-        </div>
-    </section>
-
-    <% if (pedido.status === 'Aguardando pagamento') { %>
-        <section class="sample-panel pagamento-caixa">
-            <div class="panel-heading"><h2>PAGAMENTO - <%= formas[pedido.forma_pagamento].toUpperCase() %></h2></div>
-            <% if (pedido.forma_pagamento === 'pix') { %>
-                <p class="muted">PIX simulado. Em uma loja real, aqui apareceria o QR Code.</p>
-                <code class="pagamento-codigo">00020126580014BR.GOV.BCB.PIX0136sample-<%= pedido.id %>-simulado5204000053039865802BR</code>
-            <% } else if (pedido.forma_pagamento === 'boleto') { %>
-                <p class="muted">Boleto simulado. Em uma loja real, aqui apareceria o código de barras.</p>
-                <code class="pagamento-codigo">23793.38128 60000.000003 00000.000408 1 <%= String(pedido.id).padStart(14, '0') %></code>
-            <% } else { %>
-                <p class="muted">Cartão de crédito simulado. Nenhum dado de cartão é pedido ou guardado.</p>
-            <% } %>
-            <p>Total a pagar: <strong><%= brl(pedido.total) %></strong></p>
-            <form action="/pedidos/<%= pedido.id %>/pagar" method="POST">
-                <button type="submit" class="sample-button sample-button-red">SIMULAR PAGAMENTO</button>
-            </form>
-        </section>
-    <% } %>
-
-    <div class="account-grid">
-        <section class="sample-panel">
-            <div class="panel-heading"><h2>ITENS</h2></div>
-            <% itens.forEach(i => { %>
-                <div class="resumo-item">
-                    <span><%= i.quantidade %> × <%= i.nome %></span>
-                    <strong><%= brl(i.preco_unitario * i.quantidade) %></strong>
+            <% if (pedido.status === 'Aguardando pagamento') { %>
+                <div class="bloco-pagamento">
+                    <h3>PAGAMENTO - <%= formas[pedido.forma_pagamento].toUpperCase() %></h3>
+                    <% if (pedido.forma_pagamento === 'pix') { %>
+                        <p class="muted">Pix simulado. Copie o código e cole no app do seu banco.</p>
+                        <code class="pagamento-codigo" id="codigoPagamento">00020126580014BR.GOV.BCB.PIX0136sample-<%= pedido.id %>-simulado5204000053039865802BR</code>
+                    <% } else { %>
+                        <p class="muted">Boleto simulado, com vencimento em 3 dias úteis.</p>
+                        <code class="pagamento-codigo" id="codigoPagamento">23793.38128 60000.000003 00000.000408 1 <%= String(pedido.id).padStart(14, '0') %></code>
+                    <% } %>
+                    <button type="button" class="sample-button sample-button-ghost" data-copiar="#codigoPagamento">Copiar código</button>
                 </div>
-            <% }) %>
-            <dl class="resumo-linhas">
-                <dt>Subtotal</dt><dd><%= brl(pedido.subtotal) %></dd>
-                <dt>Frete</dt><dd><%= brl(pedido.frete) %></dd>
-                <dt class="resumo-total">Total</dt><dd class="resumo-total"><%= brl(pedido.total) %></dd>
-            </dl>
-        </section>
+            <% } %>
 
-        <section class="sample-panel">
-            <div class="panel-heading"><h2>ENTREGA</h2></div>
-            <div class="address-card">
-                <strong><%= pedido.dest_nome %></strong><br>
-                <%= pedido.dest_rua %>, <%= pedido.dest_numero %><%= pedido.dest_complemento ? ' — ' + pedido.dest_complemento : '' %><br>
-                <%= pedido.dest_bairro %> — <%= pedido.dest_cidade %>/<%= pedido.dest_estado %> — CEP <%= pedido.dest_cep %><br>
-                <span>Tel. <%= pedido.dest_telefone %></span>
+            <div class="rastreio-caixa">
+                <span>CÓDIGO DE RASTREIO</span>
+                <strong class="rastreio-codigo"><%= pedido.codigo_rastreio %></strong>
+                <small class="muted">Disponível após o envio.</small>
             </div>
-            <p class="muted">Pedido feito em <%= pedido.criado_em %>.</p>
+
             <% if (podeCancelar) { %>
                 <form action="/pedidos/<%= pedido.id %>/cancelar" method="POST" onsubmit="return confirm('Cancelar este pedido?');">
                     <button type="submit" class="sample-button sample-button-ghost button-perigo">CANCELAR PEDIDO</button>
                 </form>
-                <p class="muted">Você pode cancelar até o pedido ser enviado.</p>
+            <% } %>
+
+            <% if (pedido.status !== 'Cancelado' && pedido.status !== 'Entregue') { %>
+                <form action="/pedidos/<%= pedido.id %>/avancar" method="POST" class="protótipo-avanco">
+                    <p><strong>Protótipo:</strong> avança o status do pedido para demonstrar o rastreamento.</p>
+                    <button type="submit" class="sample-button sample-button-red">Simular próxima etapa</button>
+                </form>
             <% } %>
         </section>
-    </div>
 
-    <section class="sample-panel">
-        <div class="panel-heading"><h2>HISTÓRICO</h2></div>
-        <ul class="historico-lista">
-            <% historico.slice().reverse().forEach(h => { %>
-                <li><strong><%= h.status %></strong> <span class="muted"><%= h.criado_em %></span><br><%= h.observacao %></li>
-            <% }) %>
-        </ul>
-    </section>
+        <aside class="resumo-pedido">
+            <h2>PEDIDO SP<%= String(pedido.id).padStart(5, '0') %></h2>
+            <div class="bloco-escuro">
+                <span>ENTREGA EM</span>
+                <p><%= pedido.dest_rua %>, <%= pedido.dest_numero %><%= pedido.dest_complemento ? ' — ' + pedido.dest_complemento : '' %><br>
+                <%= pedido.dest_bairro %> — <%= pedido.dest_cidade %>/<%= pedido.dest_estado %><br>CEP <%= pedido.dest_cep %></p>
+            </div>
+            <div class="bloco-escuro">
+                <span>ITENS</span>
+                <% itens.forEach(i => { %>
+                    <div class="resumo-linha-item"><span><%= i.quantidade %>x <%= i.nome %></span><span><%= brl(i.preco_unitario * i.quantidade) %></span></div>
+                <% }) %>
+            </div>
+            <dl class="resumo-valores">
+                <dt>Subtotal</dt><dd><%= brl(pedido.subtotal) %></dd>
+                <% if (pedido.desconto > 0) { %><dt class="dourado">Descontos<%= pedido.cupom ? ' (' + pedido.cupom + ')' : '' %></dt><dd class="dourado">-<%= brl(pedido.desconto) %></dd><% } %>
+                <dt>Frete</dt><dd><%= pedido.frete > 0 ? brl(pedido.frete) : 'Grátis' %></dd>
+            </dl>
+            <div class="resumo-total-linha"><span>Total</span><strong><%= brl(pedido.total) %></strong></div>
+            <a href="/pedidos" class="sample-button sample-button-ghost resumo-botao">Meus pedidos</a>
+        </aside>
+    </div>
 </main>
 
 <%- include('../partials/loja-rodape') %>

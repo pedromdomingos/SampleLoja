@@ -4,21 +4,31 @@
 <%- include('partials/loja-nav') %>
 <%- include('partials/mensagem') %>
 
+<%# Cartazes de destaque: trocam sozinhos a cada 6 segundos. As bolinhas também trocam ao clicar. %>
+<section class="cartaz-carrossel" id="cartazCarrossel" aria-roledescription="carrossel" aria-label="Destaques da loja">
+    <div class="cartaz-trilho">
+        <a class="cartaz-slide" href="/busca?q=camiseta"><img src="/img/cartaz-black-november.jpg" alt="Black November: quanto mais peças, maior o desconto"></a>
+        <a class="cartaz-slide" href="/busca?q=rolling"><img src="/img/cartaz-rolling-stones.jpg" alt="Rolling Stones: camisetas oficiais, frete grátis acima de R$ 250"></a>
+        <a class="cartaz-slide" href="/loja/roupas"><img src="/img/cartaz-black-rock.jpg" alt="Black Rock: ofertas até 60% off"></a>
+    </div>
+    <div class="cartaz-bolinhas" role="tablist">
+        <button type="button" class="ativa" aria-label="Cartaz 1"></button>
+        <button type="button" aria-label="Cartaz 2"></button>
+        <button type="button" aria-label="Cartaz 3"></button>
+    </div>
+</section>
+
 <section class="hero-rock">
     <div class="hero-grid">
         <div class="hero-copy">
             <span class="eyebrow">ROUPAS, INSTRUMENTOS E DISCOS PARA QUEM VIVE O ROCK</span>
             <h1>O ROCK NÃO<br>PEDE <span>LICENÇA</span></h1>
             <p>Da primeira camiseta rasgada ao primeiro riff desafinado, a SAMPLE existe pra equipar quem faz barulho, dentro e fora do palco.</p>
-            <div class="hero-botoes">
-                <a href="/loja/roupas" class="hero-btn hero-btn-red">Ver produtos</a>
-                <a href="#novidades" class="hero-btn hero-btn-ghost">Ver novidades</a>
-            </div>
         </div>
 
-        <div class="vz" id="vinilZona">
-            <div class="vinyl-3d" id="vinilTilt">
-                <div class="vinyl" id="vinil" tabindex="0" role="img" aria-label="Disco de vinil. Arraste ou clique para girar.">
+        <div class="vz">
+            <div class="vinyl-3d">
+                <div class="vinyl" id="vinil" role="img" aria-label="Disco de vinil. Clique para girar mais rápido.">
                     <span class="vinyl-label"><b>SAMPLE</b><small>ROCK · 33 RPM</small></span>
                 </div>
                 <div class="vinyl-sheen" aria-hidden="true"></div>
@@ -57,6 +67,27 @@
                 <svg class="bento-icone" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="32" cy="32" r="26"/><circle cx="32" cy="32" r="18"/><circle cx="32" cy="32" r="6"/></svg>
                 <div><h3>DISCOS</h3><p>Vinis, CDs e box sets de colecionador.</p><span class="bento-link">Explorar <i>→</i></span></div>
             </a>
+        </div>
+    </section>
+
+    <section class="quiz-secao" id="quizRock">
+        <div class="quiz-intro">
+            <h2 class="store-title">QUAL É O SEU ESTILO DE ROCK?</h2>
+            <p>Responda 5 perguntas rápidas e a gente destaca os produtos que mais combinam com você.</p>
+            <button type="button" id="quizComecar" class="sample-button sample-button-red">Começar o quiz</button>
+        </div>
+        <div class="quiz-caixa" hidden>
+            <div class="quiz-progresso"><span style="width:0%"></span></div>
+            <div class="quiz-pergunta">
+                <h3></h3>
+                <div class="quiz-opcoes"></div>
+            </div>
+            <div class="quiz-resultado" hidden>
+                <i class="bi bi-check-circle-fill"></i>
+                <h3></h3>
+                <p>Já destacamos os produtos que combinam com você nas vitrines abaixo.</p>
+                <a href="#mais-vendidos" class="sample-button sample-button-ghost">Ver recomendados</a>
+            </div>
         </div>
     </section>
 

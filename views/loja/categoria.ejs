@@ -9,12 +9,11 @@
 <%- include('../partials/cabecalho-pagina', { caminho: [{ t: config.rotulo }], titulo: config.titulo, texto: config.descricao, pills: pills, etapa: 0, etapaFeita: false }) %>
 
 <main class="loja-pagina">
-    <form method="GET" action="/loja/<%= pagina %>" id="formFiltros" data-lista>
+    <form method="GET" action="/loja/<%= pagina %>" id="formFiltros">
         <div class="loja-toolbar">
-            <p class="resultado-info" id="resultadoInfo" aria-live="polite"><%= total %> produto<%= total === 1 ? '' : 's' %></p>
-            <%- include('../partials/loja-controles', { ORDENS: ORDENS, ordem: ordem, qtdFiltros: qtdFiltros, secoes: secoes, selecionados: selecionados, mostrarPromocao: true }) %>
+            <p class="resultado-info"><%= total %> produto<%= total === 1 ? '' : 's' %></p>
+            <%- include('../partials/loja-controles', { ORDENS: ORDENS, ordem: ordem, qtdFiltros: qtdFiltros, secoes: secoes, selecionados: selecionados, mostrarPromocao: true, limparUrl: '/loja/' + pagina }) %>
         </div>
-        <div class="chips-ativos" id="chipsAtivos"></div>
 
         <div class="loja-corpo">
             <div class="loja-resultados" id="resultados">

@@ -7,6 +7,7 @@ const { somenteNumeros } = require('./validacoes');
 // Retorna { dados, erro }  ->  erro é null quando está tudo certo.
 function lerEndereco(d) {
     const dados = {
+        apelido: String(d.apelido || '').trim().slice(0, 30),
         destinatario: String(d.destinatario || '').trim(),
         telefone: somenteNumeros(d.telefone),
         cep: somenteNumeros(d.cep),
@@ -34,9 +35,9 @@ function lerEndereco(d) {
 function salvarEndereco(db, usuarioId, e, callback) {
     db.run(
         `INSERT INTO enderecos
-            (usuario_id, destinatario, cpf, telefone, cep, estado, cidade, bairro, rua, numero, complemento)
-         VALUES (?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [usuarioId, e.destinatario, e.telefone, e.cep, e.estado,
+            (usuario_id, apelido, destinatario, cpf, telefone, cep, estado, cidade, bairro, rua, numero, complemento)
+         VALUES (?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [usuarioId, e.apelido || null, e.destinatario, e.telefone, e.cep, e.estado,
          e.cidade, e.bairro, e.rua, e.numero, e.complemento || null],
         function (erro) {
             callback(erro, this ? this.lastID : null);

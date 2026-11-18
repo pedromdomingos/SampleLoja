@@ -1,31 +1,35 @@
+<%# MEUS PEDIDOS: cada pedido é um cartão com status, progresso e botão de acompanhar. Recebe: pedidos, formas, ETAPAS. %>
 <%- include('../admin/partials/header') %>
 <%- include('../partials/loja-topo') %>
-
 <%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Meus pedidos' }], titulo: 'MEUS PEDIDOS', texto: '', pills: [], etapa: 0, etapaFeita: false }) %>
 
 <main class="loja-pagina">
-
     <% if (!pedidos.length) { %>
-        <div class="empty-state loja-vazio">Você ainda não fez nenhum pedido. <a class="link-mostarda" href="/">Ir para a loja</a></div>
+        <div class="cartao-claro vazio-pedidos">
+            <p>Você ainda não fez nenhum pedido.</p>
+            <a class="sample-button sample-button-red" href="/">Ir para a loja</a>
+        </div>
     <% } else { %>
-        <div class="sample-panel">
-            <div class="table-wrap">
-                <table class="sample-table">
-                    <thead><tr><th>Pedido</th><th>Data</th><th>Pagamento</th><th>Total</th><th>Status</th><th></th></tr></thead>
-                    <tbody>
-                        <% pedidos.forEach(p => { %>
-                            <tr>
-                                <td><strong>#<%= p.id %></strong></td>
-                                <td><%= p.criado_em %></td>
-                                <td><%= formas[p.forma_pagamento] %></td>
-                                <td><%= brl(p.total) %></td>
-                                <td><span class="status-pedido status-<%= slugStatus(p.status) %>"><%= p.status %></span></td>
-                                <td><a class="table-action" href="/pedidos/<%= p.id %>">Acompanhar</a></td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
+        <div class="lista-pedidos">
+            <% pedidos.forEach(p => {
+                const posicao = ETAPAS.indexOf(p.status);
+                const progresso = p.status === 'Cancelado' ? 0 : Math.round((posicao + 1) / ETAPAS.length * 100);
+            %>
+                <article class="cartao-pedido">
+                    <header>
+                        <div>
+                            <strong>Pedido SP<%= String(p.id).padStart(5, '0') %></strong>
+                            <small><%= p.criado_em %> · <%= formas[p.forma_pagamento] %> · <%= brl(p.total) %></small>
+                        </div>
+                        <span class="status-pedido status-<%= slugStatus(p.status) %>"><%= p.status %></span>
+                    </header>
+                    <div class="barra-progresso"><span style="width: <%= progresso %>%"></span></div>
+                    <footer>
+                        <small>Código de rastreio: <%= p.codigo_rastreio %></small>
+                        <a class="sample-button sample-button-red" href="/pedidos/<%= p.id %>">Acompanhar entrega</a>
+                    </footer>
+                </article>
+            <% }) %>
         </div>
     <% } %>
 </main>

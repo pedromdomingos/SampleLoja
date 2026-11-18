@@ -1,0 +1,93 @@
+<%# CHECKOUT (uma página só). Variáveis: itens, subtotal, enderecos, selecionado, CUPOM, DESCONTO_PIX, FRETE_EXPRESSO, PARCELAS_MAXIMAS %>
+<%- include('../admin/partials/header') %>
+<%- include('../partials/loja-topo') %>
+<%- include('../partials/cabecalho-pagina', { caminho: [{ t: 'Carrinho', u: '/carrinho' }, { t: 'Checkout' }], titulo: 'FINALIZAR COMPRA', texto: '', pills: [], etapa: 2, etapaFeita: false }) %>
+
+<main class="loja-pagina">
+    <form action="/checkout/confirmar" method="POST" id="formCheckout" class="checkout-grid"
+          data-subtotal="<%= subtotal %>" data-cupom="<%= CUPOM.codigo %>" data-cupom-pct="<%= CUPOM.percentual %>"
+          data-pix-pct="<%= DESCONTO_PIX %>" data-expressa="<%= FRETE_EXPRESSO %>" data-parcelas="<%= PARCELAS_MAXIMAS %>">
+
+        <div class="checkout-passos">
+
+            <section class="caixa-passo">
+                <h2><span class="passo-num">1</span> ENDEREÇO DE ENTREGA</h2>
+                <% if (enderecos.length === 0) { %>
+                    <p class="passo-aviso">Você ainda não tem endereço cadastrado</p>
+                <% } %>
+                <% enderecos.forEach(e => { %>
+                    <label class="opcao">
+                        <input type="radio" name="endereco_id" value="<%= e.id %>" data-frete="<%= e.fretePadrao %>" <%= e.id === selecionado ? 'checked' : '' %>>
+                        <span class="opcao-texto">
+                            <strong><%= e.apelido ? e.apelido + ' · ' : '' %><%= e.destinatario %></strong>
+                            <small><%= e.rua %>, <%= e.numero %><%= e.complemento && e.complemento !== 'Sem complemento' ? ' — ' + e.complemento : '' %> · <%= e.bairro %> · <%= e.cidade %>/<%= e.estado %> · CEP <%= e.cep %></small>
+                        </span>
+                    </label>
+                <% }) %>
+                <a href="/checkout/endereco/novo" class="botao-contorno">+ Adicionar novo endereço</a>
+            </section>
+
+            <section class="caixa-passo">
+                <h2><span class="passo-num">2</span> FORMA DE ENTREGA</h2>
+                <label class="opcao">
+                    <input type="radio" name="entrega" value="padrao" checked>
+                    <span class="opcao-texto"><strong>Padrão</strong><small>5 a 8 dias úteis</small></span>
+                    <b id="precoPadrao">—</b>
+                </label>
+                <label class="opcao">
+                    <input type="radio" name="entrega" value="expressa">
+                    <span class="opcao-texto"><strong>Expressa</strong><small>2 a 3 dias úteis</small></span>
+                    <b><%= brl(FRETE_EXPRESSO) %></b>
+                </label>
+            </section>
+
+            <section class="caixa-passo">
+                <h2><span class="passo-num">3</span> PAGAMENTO</h2>
+                <div class="abas-pagamento">
+                    <label class="aba ativa"><input type="radio" name="forma" value="pix" checked>Pix (<%= DESCONTO_PIX %>% off)</label>
+                    <label class="aba"><input type="radio" name="forma" value="cartao">Cartão de Crédito</label>
+                    <label class="aba"><input type="radio" name="forma" value="boleto">Boleto</label>
+                </div>
+
+                <p class="passo-nota" data-painel="pix">O QR Code do Pix será gerado ao finalizar o pedido. Desconto de <%= DESCONTO_PIX %>% aplicado.</p>
+
+                <div data-painel="cartao" hidden>
+                    <div class="campo"><label>Número do Cartão</label><input type="text" name="cartao_numero" id="cartaoNumero" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="off"></div>
+                    <div class="campo"><label>Nome Impresso</label><input type="text" name="cartao_nome" placeholder="Como está no cartão" autocomplete="off"></div>
+                    <div class="campo-linha">
+                        <div class="campo"><label>Validade</label><input type="text" name="cartao_validade" id="cartaoValidade" maxlength="5" placeholder="MM/AA" autocomplete="off"></div>
+                        <div class="campo"><label>CVV</label><input type="text" name="cartao_cvv" inputmode="numeric" maxlength="4" placeholder="000" autocomplete="off"></div>
+                        <div class="campo"><label>Parcelas</label><select name="parcelas" id="parcelas"></select></div>
+                    </div>
+                    <p class="passo-nota">Simulação: os dados do cartão são conferidos mas não ficam guardados.</p>
+                </div>
+
+                <p class="passo-nota" data-painel="boleto" hidden>O boleto será gerado ao finalizar e vence em 3 dias úteis. O pedido é liberado após a compensação.</p>
+            </section>
+        </div>
+
+        <aside class="resumo-pedido">
+            <h2>SEU PEDIDO</h2>
+            <% itens.forEach(i => { %>
+                <div class="resumo-linha-item"><span><%= i.quantidade %>x <%= i.produto.nome %></span><span><%= brl(i.preco * i.quantidade) %></span></div>
+            <% }) %>
+
+            <div class="cupom-linha">
+                <input type="text" name="cupom" id="campoCupom" placeholder="Cupom (<%= CUPOM.codigo %>)" autocomplete="off">
+                <button type="button" id="aplicarCupom">Aplicar</button>
+            </div>
+            <small id="msgCupom" class="cupom-msg"></small>
+
+            <dl class="resumo-valores">
+                <dt>Subtotal</dt><dd id="valSubtotal"><%= brl(subtotal) %></dd>
+                <dt class="dourado">Descontos</dt><dd class="dourado" id="valDescontos">R$ 0,00</dd>
+                <dt>Frete</dt><dd id="valFrete">—</dd>
+            </dl>
+            <div class="resumo-total-linha"><span>Total</span><strong id="valTotal"><%= brl(subtotal) %></strong></div>
+            <button type="submit" class="sample-button sample-button-red resumo-botao">Finalizar pedido</button>
+        </aside>
+    </form>
+</main>
+
+<%- include('../partials/loja-rodape') %>
+<%- include('../admin/partials/footer') %>

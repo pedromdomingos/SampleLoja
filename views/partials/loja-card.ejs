@@ -1,15 +1,14 @@
 <%# Card de produto. Recebe: p (produto), podeComprar, voltarPara e selo (texto do selo; vazio usa "Mais vendido" se o produto for destaque) %>
 <%
     const _selo = selo || (p.destaque ? 'Mais vendido' : '');
-    const _tipo = (p.tipo_peca || p.tipo_instrumento || p.formato || p.categoria || '');
+    const _tipo = (p.tipo_peca || p.tipo_instrumento || p.formato || p.categoria || '') + (p.tipo_produto === 'roupa' && p.tamanho ? ' · Tam. ' + p.tamanho : '');
 %>
-<article class="product-card">
+<article class="product-card" data-genero="<%= p.genero || '' %>">
     <a class="product-photo" href="/produto/<%= p.id %>" tabindex="-1" aria-hidden="true">
-        <% if (p.imagem) { %><img src="/uploads/<%= p.imagem %>" alt=""><% } %>
+        <% if (p.imagem) { %><img src="/uploads/<%= p.imagem %>" alt="" onerror="this.onerror=null; this.src='/img/sem-foto.svg'"><% } %>
         <% if (_selo) { %><em class="selo"><%= _selo %></em><% } %>
         <% if (desconto(p) > 0) { %><em class="off-badge">-<%= desconto(p) %>%</em><% } %>
         <% if (p.estoque <= 0) { %><em class="sem-estoque">INDISPONÍVEL</em><% } %>
-        <span class="product-quick">Ver detalhes <i class="bi bi-arrow-right"></i></span>
     </a>
     <div class="product-body">
         <span class="product-tipo"><%= _tipo %></span>
